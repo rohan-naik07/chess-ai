@@ -1,23 +1,27 @@
-import logo from './logo.svg';
+import React from 'react';
 import './App.css';
+import Game from './game';
 
 function App() {
+  const board = [];
+  let flag = true;
+  for(let i=0;i<8;i+=1){
+    let row = []
+    for(let j=0;j<8;j+=1){
+      row.push({
+        row : i,
+        col : j,
+        color : flag===true ? 'white' : 'brown'
+      })
+      flag = flag===true ? false : true
+    }
+    board.push(row)
+    flag = flag===true ? false : true
+  }
+  
   return (
     <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
+      <Game board={board}/>
     </div>
   );
 }
