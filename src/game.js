@@ -1,5 +1,4 @@
 import React from "react";
-import { verifyCheckMate } from "./checkmate";
 import bdt from './pieces/Chess_bdt60.png';
 import blt from './pieces/Chess_blt60.png';
 import rdt from './pieces/Chess_rdt60.png';
@@ -12,6 +11,7 @@ import ndt from './pieces/Chess_ndt60.png';
 import nlt from './pieces/Chess_nlt60.png';
 import pdt from './pieces/Chess_pdt60.png';
 import plt from './pieces/Chess_plt60.png';
+import verifyCheckMate from "./checkmate";
 
 const Game = ({board})=>{
     const pieces = {
@@ -116,7 +116,6 @@ const Game = ({board})=>{
     const [selectedLocation,setSelectedLocation] = React.useState(null);
     const [history,setHistory] = React.useState([]);
     const [destroyed,setDestroyed] = React.useState([]);
-    
 
     const checkConstraints = position=>{
         return (
@@ -134,7 +133,7 @@ const Game = ({board})=>{
             positions[id] = positions[selectedLocation];
             delete positions[selectedLocation];
             setSelectedLocation(null);
-            setPositions(positions);
+            setPositions({...positions});
             history.push({...positions});
             setHistory(history);
             setTurn(turn==='white' ? 'black' : 'white');
@@ -199,7 +198,11 @@ const Game = ({board})=>{
                 ){
                     if(checkConstraints([newRow,newCol])){
                         const overlapping = checkOverlap(id);
-                        if(overlapping[2]===true || overlapping[3]===true){
+                        if(newRow + newCol === row + col && overlapping[2]===true ){
+                            flag=0;
+                            return flag;
+                        }
+                        if(newRow - newCol + 7 === row - col + 7 && overlapping[3]===true){
                             flag=0;
                             return flag;
                         }
@@ -304,19 +307,12 @@ const Game = ({board})=>{
     }
 
     const onClickHandler = (id)=>{
-        
-        
         if(selectedLocation!==null){
             if(positions[id]!==undefined && turn===positions[id].substring(0,5)){
                 setSelectedLocation(id);
             } else {
                 const flag = checkValidMove(id);
                 playMove(flag,id);
-                try {
-                    console.log(verifyCheckMate(turn,{...positions}));
-                } catch (error) {
-                    console.log(error)
-                }
             }
         } else {
             if(positions[id]!==undefined && turn===positions[id].substring(0,5)){
@@ -324,6 +320,15 @@ const Game = ({board})=>{
             }
         }
     }
+
+    React.useEffect(()=>{
+        try {
+            if(selectedLocation===null && history.length!==0)
+                console.log(new verifyCheckMate().isCheckmated(2,turn,{...positions}));
+        } catch (error) {
+            console.log(error)
+        }
+    },[selectedLocation])
 
     const checkOverlap = (id)=>{
         const nrow = Number(id.split('+')[0]);
