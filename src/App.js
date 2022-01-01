@@ -21,7 +21,7 @@ function App() {
   
   return (
     <div className="App">
-      <Game board={board}/>
+      <Game board={board} initialTurn={'white'}/>
     </div>
   );
 }
