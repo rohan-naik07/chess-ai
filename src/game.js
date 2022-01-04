@@ -8,6 +8,7 @@ import {
 import Utils from "./util";
 import qdt from './pieces/Chess_qdt60.png';
 import qlt from './pieces/Chess_qlt60.png';
+import MiniMax from "./minimax";
 
 function getBoard(){
   const board = [];
@@ -40,6 +41,7 @@ const Game = ({initialTurn})=>{
     const [gameOver,setGameOver] = React.useState(false);
     const [pawnPromotions,setPawnPromotions] = React.useState({});
     const utils = new Utils();
+    let minimax = new MiniMax();
 
     const playMove = (flag,id)=>{
         if(flag!==0){
@@ -58,7 +60,7 @@ const Game = ({initialTurn})=>{
             setPositions({...positions});
             setMoved(moved);
             setHistory(history);
-            setTurn(turn==='white' ? 'black' : 'white');
+            //setTurn(turn==='white' ? 'black' : 'white');
         }
     }
 
@@ -73,7 +75,7 @@ const Game = ({initialTurn})=>{
             setPositions({...positions});
             setMoved(moved);
             setHistory(history);
-            setTurn(turn==='white' ? 'black' : 'white');
+            //setTurn(turn==='white' ? 'black' : 'white');
         
     }
 
@@ -112,7 +114,7 @@ const Game = ({initialTurn})=>{
                 setPositions({...positions});
                 history.push({...positions});
                 setHistory(history);
-                setTurn(turn==='white' ? 'black' : 'white');
+                //setTurn(turn==='white' ? 'black' : 'white');
             }
         }
         if(newCol < col){
@@ -147,7 +149,7 @@ const Game = ({initialTurn})=>{
                 setPositions({...positions});
                 history.push({...positions});
                 setHistory(history);
-                setTurn(turn==='white' ? 'black' : 'white');
+                //setTurn(turn==='white' ? 'black' : 'white');
             }
         }
     }
@@ -165,7 +167,27 @@ const Game = ({initialTurn})=>{
         positions[selectedLocation] = `${turn}1queen`;
         playMove(flag,id);
     }
-   
+    const playAI = (turn)=>{
+        let move = minimax.minimaxRoot(3,true, turn==='white' ? 'black' : 'white',{...positions});
+        let selectedLocation = move[0];
+        let id = move[1];
+        if(positions[id]!==undefined){
+            pieces[positions[id]].destroyed_flag = true;
+            destroyed.push(id);
+            setDestroyed(destroyed);
+        }
+        if(moved[positions[selectedLocation]]!==undefined){
+            moved[positions[selectedLocation]] = true;
+        }
+        positions[id] = positions[selectedLocation];
+        delete positions[selectedLocation];
+        history.push({...positions});
+        setSelectedLocation(null);
+        setPositions({...positions});
+        setMoved(moved);
+        setHistory(history);
+    }
+
     const onClickHandler = (id)=>{
         if(gameOver===true){
             return;
@@ -215,9 +237,17 @@ const Game = ({initialTurn})=>{
                 if(typeof(flag)==="string"){
                     playPassantMove(flag,id);
                 } else playMove(flag,id);
+                
+                if(utils.isinCheck(turn,{...positions})===true){
+                    const over = utils.isCheckmated(turn,{...positions});
+                    if(over===true){
+                        setGameOver(over);
+                    }
+                }
 
-                if(utils.isinCheck(turn,positions)===true){
-                    const over = utils.isCheckmated(turn,positions);
+                playAI(turn);
+                if(utils.isinCheck(turn,{...positions})===true){
+                    const over = utils.isCheckmated(turn,{...positions});
                     if(over===true){
                         setGameOver(over);
                     }
@@ -239,7 +269,7 @@ const Game = ({initialTurn})=>{
             setPositions(pos);
             history.pop();
             setHistory(history)
-            setTurn(turn==='white' ? 'black' : 'white');
+            //setTurn(turn==='white' ? 'black' : 'white');
             return;
         }
         if(history.length-2>=0){
@@ -264,7 +294,7 @@ const Game = ({initialTurn})=>{
             setDestroyed(destroyed);
             history.pop();
             setHistory(history)
-            setTurn(turn==='white' ? 'black' : 'white');
+            //setTurn(turn==='white' ? 'black' : 'white');
         } 
         
     }
