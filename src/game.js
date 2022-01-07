@@ -9,6 +9,7 @@ import Utils from "./util";
 import qdt from './pieces/Chess_qdt60.png';
 import qlt from './pieces/Chess_qlt60.png';
 import MiniMax from "./minimax";
+import './App.css'
 
 function getBoard(){
   const board = [];
@@ -29,7 +30,7 @@ function getBoard(){
   return board;
 }
 
-const Game = ({initialTurn})=>{
+const Game = ({initialTurn,name})=>{
     const [positions,setPositions] = React.useState(
         initialTurn==='white' ?  initialPositionsWhite : initialPositionsBlack
     );
@@ -40,6 +41,7 @@ const Game = ({initialTurn})=>{
     const [moved,setMoved] = React.useState(checkifMoved);
     const [gameOver,setGameOver] = React.useState(false);
     const [pawnPromotions,setPawnPromotions] = React.useState({});
+    const [isPlaying,setisPlaying] = React.useState(true);
     const utils = new Utils();
     let minimax = new MiniMax();
 
@@ -60,7 +62,7 @@ const Game = ({initialTurn})=>{
             setPositions({...positions});
             setMoved(moved);
             setHistory(history);
-            //setTurn(turn==='white' ? 'black' : 'white');
+            setTurn(turn==='white' ? 'black' : 'white');
         }
     }
 
@@ -75,7 +77,7 @@ const Game = ({initialTurn})=>{
             setPositions({...positions});
             setMoved(moved);
             setHistory(history);
-            //setTurn(turn==='white' ? 'black' : 'white');
+            setTurn(turn==='white' ? 'black' : 'white');
         
     }
 
@@ -114,7 +116,7 @@ const Game = ({initialTurn})=>{
                 setPositions({...positions});
                 history.push({...positions});
                 setHistory(history);
-                //setTurn(turn==='white' ? 'black' : 'white');
+                setTurn(turn==='white' ? 'black' : 'white');
             }
         }
         if(newCol < col){
@@ -149,7 +151,7 @@ const Game = ({initialTurn})=>{
                 setPositions({...positions});
                 history.push({...positions});
                 setHistory(history);
-                //setTurn(turn==='white' ? 'black' : 'white');
+                setTurn(turn==='white' ? 'black' : 'white');
             }
         }
     }
@@ -192,6 +194,7 @@ const Game = ({initialTurn})=>{
         if(gameOver===true){
             return;
         }
+        setisPlaying(true)
         if(selectedLocation!==null){
             const type = positions[selectedLocation].substring(6);
             const newRow = Number(id.split('+')[0]);
@@ -237,15 +240,8 @@ const Game = ({initialTurn})=>{
                 if(typeof(flag)==="string"){
                     playPassantMove(flag,id);
                 } else playMove(flag,id);
-                
-                if(utils.isinCheck(turn,{...positions})===true){
-                    const over = utils.isCheckmated(turn,{...positions});
-                    if(over===true){
-                        setGameOver(over);
-                    }
-                }
 
-                playAI(turn);
+                setisPlaying(false);
                 if(utils.isinCheck(turn,{...positions})===true){
                     const over = utils.isCheckmated(turn,{...positions});
                     if(over===true){
@@ -258,7 +254,16 @@ const Game = ({initialTurn})=>{
                 setSelectedLocation(id);
             }
         }
-    }    
+    } 
+    
+    React.useEffect(()=>{
+        if(turn!==initialTurn){
+            setisPlaying(true);
+            playAI(initialTurn);
+            setTurn(initialTurn)
+            setisPlaying(false);
+        }
+    },[turn])
 
     const undoHandler = ()=>{
         if(history.length===0){
@@ -269,7 +274,7 @@ const Game = ({initialTurn})=>{
             setPositions(pos);
             history.pop();
             setHistory(history)
-            //setTurn(turn==='white' ? 'black' : 'white');
+            setTurn(turn==='white' ? 'black' : 'white');
             return;
         }
         if(history.length-2>=0){
@@ -294,7 +299,7 @@ const Game = ({initialTurn})=>{
             setDestroyed(destroyed);
             history.pop();
             setHistory(history)
-            //setTurn(turn==='white' ? 'black' : 'white');
+            setTurn(turn==='white' ? 'black' : 'white');
         } 
         
     }
@@ -307,16 +312,16 @@ const Game = ({initialTurn})=>{
                         style={{
                             padding:20,
                             backgroundColor: selectedLocation===`${cell.row}+${cell.col}` ? 'grey' : cell.color,
-                            width:50,
-                            height:50
+                            width:40,
+                            height:40
                         }}  
                         onClick={()=>onClickHandler(`${cell.row}+${cell.col}`)}>
                         {
                             positions[`${cell.row}+${cell.col}`]!==undefined && 
                             pieces[positions[`${cell.row}+${cell.col}`]].destroyed_flag===false ?
                             <div id={`${cell.row}+${cell.col}`}>
-                                <img width='50px' 
-                                     height='50px' 
+                                <img width='40px' 
+                                     height='40px' 
                                      alt={`${cell.row}+${cell.col}`} 
                                      src={pieces[positions[`${cell.row}+${cell.col}`]].image}
                                 />
@@ -328,17 +333,82 @@ const Game = ({initialTurn})=>{
         </div>
         
     }
+    
     return (
-        <div style={{padding : 20}}>
-            <div style={{textAlign:'center'}}>
-                {turn}
+    <div style={{display:'flex',justifyContent : 'space-around'}}>
+        <div style={{width : '60%'}}>
+            <div style={styles.opponentTurn}>
+                <h3>AI</h3>
+                {
+                    isPlaying===true ? <h5>Playing...</h5> : null
+                }
             </div>
             {
                 getBoard().map((row,index)=>getRowRendering(row,index))
             }
-            <button style={{padding : 10,textAlign:'center'}} onClick={()=>undoHandler()}>Undo</button>
+            <div style={styles.yourTurn}>
+                <h3>{name}</h3>
+                {
+                    isPlaying===true ? <h5>Playing...</h5>: null
+                }
+                </div>
         </div>
+        <div style={{width : '40%'}}>
+            <div style={{ 
+                borderRadius : 10,
+                backgroundColor : 'brown',
+                padding : 20,
+                margin : 10
+            }}>Timer</div>
+            <div style={{ 
+                borderRadius : 10,
+                backgroundColor : 'grey',
+                padding : 20,
+                margin : 10,
+                minHeight : '150px',
+                overflow : 'auto'
+            }}>
+                
+            </div>
+            <div style={{
+                padding : 10,
+                textAlign:'center',
+                borderRadius : 10,
+                border: 'solid #000',
+                borderWidth: '1px',
+                margin : 10
+            }} onClick={()=>undoHandler()}>Undo</div>
+            <div style={{
+                padding : 10,
+                textAlign:'center',
+                borderRadius : 10,
+                backgroundColor : 'brown',
+                margin : 10
+            }} onClick={null}>Abandon</div>
+        </div>
+    </div>
     )
+}
+
+const styles = {
+    yourTurn : {
+        borderRadius : 10,
+        backgroundColor : 'brown',
+        margin : 5,
+        padding : 5,
+        display:'flex',
+        justifyContent : 'space-between'
+    },
+    opponentTurn : {
+        borderRadius : 10,
+        border: 'solid #000',
+        borderWidth: '1px',
+        borderColor : 'brown',
+        margin : 10,
+        padding : 5,
+        display:'flex',
+        justifyContent : 'space-between'
+    }
 }
 
 export default Game;

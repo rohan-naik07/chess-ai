@@ -84,127 +84,25 @@ export default class MiniMax {
 
     generateMoves=(turn,positions)=>{
         let moves = [];
-        Object.keys(positions).forEach(key=>{
-            if(positions[key]!==undefined && positions[key].substring(0,5)===turn){
-                let temp = this.getMoves(key,positions[key].substring(6),positions);
-                temp.forEach(move=>moves.push(move));
+        let squares = [];
+        for(let i=0;i<8;i++){
+            for(let j=0;j<8;j++){
+                squares.push(`${i}+${j}`)
             }
-        })
-        return moves;
-    }
-
-    getMoves = (id,type,positions,turn) => {
-        const row = Number(id.split('+')[0]);
-        const col = Number(id.split('+')[1]);
-        let moves = []
-        let counter=1;
-        let validMoves=0;
-        switch(type){
-            case 'king':
-                let square = [
-                    [row+1,col],[row-1,col],[row,col+1],[row,col-1],
-                    [row+1,col+1],[row+1,col-1],[row-1,col+1],[row-1,col-1]
-                ];
-                square.forEach(position=>{
-                   if(this.utils.checkValidMove(`${position[0]}+${position[1]}`,id,{...positions},turn,false)!==0)
-                        moves.push([id,`${position[0]}+${position[1]}`])
-                      
-                })
-                break;
-            case 'queen':
-                counter=1;
-                validMoves=0;
-                do{
-                    validMoves=0;
-                    let choices = [
-                        [row+counter,col],[row-counter,col],
-                        [row,col+counter],[row,col+counter],
-                        [row+counter,col+counter],[row-counter,col-counter],
-                        [row+counter,col-counter],[row-counter,col-counter]
-                    ]
-                    choices.forEach(position=>{
-                        if(this.utils.checkValidMove(`${position[0]}+${position[1]}`,id,{...positions},turn,false)!==0){
-                            moves.push([id,`${position[0]}+${position[1]}`])
-                            validMoves+=1;
-                        }    
-                    })
-                    counter+=1;
-                } while (validMoves!==0);
-                break;
-            case 'bishop':
-                counter=1;
-                validMoves=0;
-                do{
-                    validMoves=0;
-                    let choices = [
-                        [row+counter,col+counter],[row-counter,col-counter],
-                        [row+counter,col-counter],[row-counter,col-counter]
-                    ]
-                    choices.forEach(position=>{
-                        if(this.utils.checkValidMove(`${position[0]}+${position[1]}`,id,{...positions},turn,false)!==0){
-                            moves.push([id,`${position[0]}+${position[1]}`])
-                            validMoves+=1;
-                        }     
-                    })
-                    counter+=1;
-                } while (validMoves!==0);
-                break;
-            case 'knight':
-                const choices = [
-                    [row+2,col+1],[row-2,col+1],[row+1,col+2],[row+1,col-2],
-                    [row+2,col-1],[row-2,col-1],[row-1,col+2],[row-1,col-2]
-                ]
-                choices.forEach(position=>{
-                    if(this.utils.checkValidMove(`${position[0]}+${position[1]}`,id,{...positions},turn,false)!==0)
-                        moves.push([id,`${position[0]}+${position[1]}`])  
-                })
-                break;
-            case 'rook':
-                counter=1;
-                validMoves=0;
-                do{
-                    validMoves=0;
-                    let choices = [
-                        [row+counter,col],[row-counter,col],
-                        [row,col+counter],[row,col+counter]
-                    ]
-                    choices.forEach(position=>{
-                        if(this.utils.checkValidMove(`${position[0]}+${position[1]}`,id,{...positions},turn,false)!==0){
-                            moves.push([id,`${position[0]}+${position[1]}`])
-                            validMoves+=1;
-                        }  
-                    })
-                    counter+=1;
-                } while (validMoves!==0);
-                break;
-            case 'pawn':
-                const plainMoves = [
-                    row===1 || row===6 ? [(turn==='white' ? row-2 : row+2),col] : [row+10,col+10],
-                    [(turn==='white' ? row-1 : row+1),col]
-                ]
-                const attackMoves = [
-                    turn==='white' ? [row-1,col+1] : [row+1,col-1],
-                    turn==='white' ? [row-1,col-1] : [row+1,col+1]
-                ]
-                let done=false;
-                attackMoves.forEach(position=>{
-                   if(this.utils.checkValidMove(`${position[0]}+${position[1]}`,id,{...positions},turn,false)!==0)
-                        moves.push([id,`${position[0]}+${position[1]}`])
-                       
-                })
-                if(done===false){
-                    plainMoves.forEach(position=>{
-                        if(this.utils.checkValidMove(`${position[0]}+${position[1]}`,id,{...positions},turn,false)!==0)
-                            moves.push([id,`${position[0]}+${position[1]}`])
-                            
-                    })
+        }
+        for(let i=0;i<64;i++){
+            if(positions[squares[i]]!==undefined && positions[squares[i]].substring(0,5)===turn){
+                for(let j=0;j<64;j++){
+                    if(this.utils.checkValidMove(squares[j],squares[i],positions,turn,false)!==0){
+                        moves.push([squares[i],squares[j]]);
+                    }
                 }
-                break;
-            default : break;
+            }  
         }
         return moves;
     }
 
+    
 
     minimaxRoot =function(depth,isMaximisingPlayer,turn,positions) {
 

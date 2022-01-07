@@ -1,5 +1,4 @@
 .App {
-  text-align: center;
   justify-content: center;
   align-items: center;
 }
@@ -7,6 +6,22 @@
 .App-logo {
   height: 40vmin;
   pointer-events: none;
+}
+
+
+h3{
+  padding: 0px;
+  margin: 0px;
+}
+
+h4{
+  padding: 0px;
+  margin: 0px;
+}
+
+h5{
+  padding: 0px;
+  margin: 0px;
 }
 
 @media (prefers-reduced-motion: no-preference) {

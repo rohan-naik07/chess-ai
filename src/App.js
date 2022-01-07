@@ -5,7 +5,7 @@ import Game from './game';
 function App() {
   return (
     <div className="App">
-      <Game initialTurn={'white'}/>
+      <Game initialTurn={'white'} name={'Rohan'}/>
     </div>
   );
 }
