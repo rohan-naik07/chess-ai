@@ -79,22 +79,21 @@ export default class MiniMax {
         ];
         
         this.kingEvalBlack = this.reverseArray(this.kingEvalWhite);
-    
+        this.squares = [];
+        for(let i=0;i<8;i++){
+            for(let j=0;j<8;j++){
+                this.squares.push(`${i}+${j}`)
+            }
+        }
     }
 
     generateMoves=(turn,positions)=>{
         let moves = [];
-        let squares = [];
-        for(let i=0;i<8;i++){
-            for(let j=0;j<8;j++){
-                squares.push(`${i}+${j}`)
-            }
-        }
         for(let i=0;i<64;i++){
-            if(positions[squares[i]]!==undefined && positions[squares[i]].substring(0,5)===turn){
+            if(positions[this.squares[i]]!==undefined && positions[this.squares[i]].substring(0,5)===turn){
                 for(let j=0;j<64;j++){
-                    if(this.utils.checkValidMove(squares[j],squares[i],positions,turn,false)!==0){
-                        moves.push([squares[i],squares[j]]);
+                    if(this.utils.checkValidMove(this.squares[j],this.squares[i],positions,turn,false)!==0){
+                        moves.push([this.squares[i],this.squares[j]]);
                     }
                 }
             }  
@@ -176,9 +175,9 @@ export default class MiniMax {
             }
             return bestMove;
         } else {
-            var bestMove = 9999;
-            for (var i = 0; i < newGameMoves.length; i++) {
-                var newGameMove = newGameMoves[i]
+            bestMove = 9999;
+            for (i = 0; i < newGameMoves.length; i++) {
+                newGameMove = newGameMoves[i]
                 let piece = positions[newGameMove[0]];
                 positions[newGameMove[1]] = piece;
                 delete positions[newGameMove[0]];
@@ -236,7 +235,6 @@ export default class MiniMax {
         } else if (piece === 'king') {
             return 900 + ( isWhite ? this.kingEvalWhite[y][x] : this.kingEvalBlack[y][x] );
         }
-        throw "Unknown piece type: " + piece;
     };
     
     getPieceValue = function (piece, x, y) {

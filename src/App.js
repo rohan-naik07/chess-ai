@@ -1,11 +1,11 @@
 import React from 'react';
 import './App.css';
-import Game from './game';
+import Auth from './auth';
 
 function App() {
   return (
     <div className="App">
-      <Game initialTurn={'white'} name={'Rohan'}/>
+      <Auth/>
     </div>
   );
 }
