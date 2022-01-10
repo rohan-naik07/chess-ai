@@ -42,6 +42,7 @@ const Game = ({initialTurn,name,setDisplay})=>{
     const [gameOver,setGameOver] = React.useState(false);
     const [pawnPromotions,setPawnPromotions] = React.useState({});
     const [isPlaying,setisPlaying] = React.useState('y');
+    const [check,setCheck] = React.useState(null);
     const utils = new Utils();
     let minimax = new MiniMax();
 
@@ -96,7 +97,11 @@ const Game = ({initialTurn,name,setDisplay})=>{
         if(newCol > col){
             let rookPos = null;
             for(let i=col;i<=7;i++){
-                if(positions[`${row}+${i}`]!==undefined && positions[`${row}+${i}`].substring(6)==='rook' && moved[positions[`${row}+${i}`]]===false){
+                if(
+                    positions[`${row}+${i}`]!==undefined 
+                    && positions[`${row}+${i}`].substring(6)==='rook' 
+                    && moved[positions[`${row}+${i}`]]===false
+                ){
                     rookPos = `${row}+${i}`;
                 }
             }
@@ -128,7 +133,11 @@ const Game = ({initialTurn,name,setDisplay})=>{
         if(newCol < col){
             let rookPos = null;
             for(let i=col;i>=0;i--){
-                if(positions[`${row}+${i}`]!==undefined && positions[`${row}+${i}`].substring(6)==='rook' && moved[positions[`${row}+${i}`]]===false){
+                if(
+                    positions[`${row}+${i}`]!==undefined && 
+                    positions[`${row}+${i}`].substring(6)==='rook' && 
+                    moved[positions[`${row}+${i}`]]===false
+                ){
                     rookPos = `${row}+${i}`;
                 }
             }
@@ -201,7 +210,12 @@ const Game = ({initialTurn,name,setDisplay})=>{
         if(gameOver===true){
             return;
         }
-    
+        if(utils.isinCheck(turn,{...positions})===true){
+            setGameOver(true);
+            return;
+        } else {
+            setCheck(null);
+        } 
         if(selectedLocation!==null){
             const type = positions[selectedLocation].substring(6);
             const newRow = Number(id.split('+')[0]);
@@ -250,8 +264,19 @@ const Game = ({initialTurn,name,setDisplay})=>{
                 } else piece = playMove(flag,id);
 
                 setisPlaying('a');
-                moves.push([selectedLocation,id,initialTurn,piece])
-                setMoves(moves);
+                if(flag!==0){
+                    moves.push([selectedLocation,id,initialTurn,piece])
+                    setMoves(moves);
+                }
+                let isCheck = utils.isinCheck(turn,{...positions});
+                let over;
+                if(isCheck===true){
+                    setCheck(turn==='white' ? 'black' : 'white' )
+                    over = utils.isCheckmated(turn,{...positions});
+                    if(over===true){
+                        setGameOver(over);
+                    } 
+                } 
             }
         } else {
             if(positions[id]!==undefined && turn===positions[id].substring(0,5)){
@@ -263,6 +288,13 @@ const Game = ({initialTurn,name,setDisplay})=>{
     
     React.useEffect(()=>{
         if(turn!==initialTurn){
+            if(utils.isinCheck(turn,{...positions})){
+                setGameOver(true);
+                return;
+            } else {
+                setCheck(null);
+            } 
+
             let move = playAI(initialTurn);
             let selectedLocation = move[0];
             let id = move[1];
@@ -270,51 +302,31 @@ const Game = ({initialTurn,name,setDisplay})=>{
             setisPlaying('y');
             moves.push([selectedLocation,id,turn,move[2]])
             setMoves(moves);
-        }
-        let isCheckWhite = utils.isinCheck('white',{...positions});
-        let isCheckBlack = utils.isinCheck('black',{...positions});
-        console.log(isCheckWhite)
-        console.log(isCheckBlack)
-        let over;
-        if(isCheckWhite===true){
-            over = utils.isCheckmated('white',{...positions});
-            console.log(over)
-            if(over===true){
-                setGameOver(over);
-            } 
-        }
 
-        if(isCheckBlack===true){
-            over = utils.isCheckmated('black',{...positions});
-            console.log(over)
-            if(over===true){
-                setGameOver(over);
+            let isCheck = utils.isinCheck(turn,{...positions});
+            let over;
+            if(isCheck===true){
+                setCheck(turn==='white' ? 'black' : 'white' )
+                over = utils.isCheckmated(turn,{...positions});
+                if(over===true){
+                    setGameOver(over);
+                } 
             } 
         }
     },[turn])
 
     const undoHandler = ()=>{
-        console.log(moves)
         if(moves.length===0){
             return;
         }
-        moves.pop();
-        moves.pop();
-        console.log(moves)
-        if(moves.length===0){
-            let pos = initialTurn==='white' ?  {...initialPositionsWhite} : {...initialPositionsBlack};
-            setPositions(pos);
-            setTurn(initialTurn);
-            return;
-        }
-
+        let key;
         let opponentMove = moves[moves.length-1];
         let selectedLocation = opponentMove[1];
         let id = opponentMove[0];
         positions[id] = positions[selectedLocation];
         delete positions[selectedLocation];
-        
         if(opponentMove[3]!==null){
+            positions[selectedLocation] = opponentMove[3];
             pieces[opponentMove[3]].destroyed_flag = false;
             if(moved[pieces[opponentMove[3]]]===true){
                 moved[pieces[opponentMove[3]]] = false;
@@ -322,42 +334,45 @@ const Game = ({initialTurn,name,setDisplay})=>{
         }
 
         if(pawnPromotions[moves.length]!==undefined){
-            const key = Object.keys(pawnPromotions[moves.length])[0];
+            key = Object.keys(pawnPromotions[moves.length])[0];
             delete pieces[key];
             positions[pawnPromotions[moves.length][key]] = key;
             delete pawnPromotions[moves.length];
             setPawnPromotions(pawnPromotions);
         }
 
-        let yourMove = moves[moves.length-2];
+        moves.pop();
+
+        let yourMove = moves[moves.length-1];
         selectedLocation = yourMove[1];
         id = yourMove[0];
         positions[id] = positions[selectedLocation];
         delete positions[selectedLocation];
-        
         if(yourMove[3]!==null){
+            positions[selectedLocation] = yourMove[3];
             pieces[yourMove[3]].destroyed_flag = false;
             if(moved[pieces[yourMove[3]]]===true){
                 moved[pieces[yourMove[3]]] = false;
             }
         }
 
-        if(pawnPromotions[moves.length-1]!==undefined){
-            const key = Object.keys(pawnPromotions[moves.length-1])[0];
+        if(pawnPromotions[moves.length]!==undefined){
+            key = Object.keys(pawnPromotions[moves.length])[0];
             delete pieces[key];
-            positions[pawnPromotions[moves.length-1][key]] = key;
+            positions[pawnPromotions[moves.length][key]] = key;
             delete pawnPromotions[moves.length];
             setPawnPromotions(pawnPromotions);
         }
 
+        moves.pop();
         
-        setPositions(positions);
+        setPositions({...positions});
         setMoves(moves);
         setTurn(initialTurn);
     }
 
     const getRowRendering = (row,index)=>{
-        return <div style={{display:'flex',justifyContent:'center',alignItems:'center'}} key={index}>
+        return <div style={styles.rowRender} key={index}>
             {
                 row.map(cell=>{
                     return <div id={`${cell.row}+${cell.col}`} key={`${cell.row}+${cell.col}`} 
@@ -385,10 +400,24 @@ const Game = ({initialTurn,name,setDisplay})=>{
         </div>
         
     }
-
+    const displayMessage = ()=>{
+        if(gameOver===true){
+            return (
+                <h4 style={{color : 'yellow'}}>Checkmate!!</h4>
+            )
+        }
+        if(check===null){
+            return (
+                <h5>Your have 5 minutes to decide a move. After that,game will be over.</h5>
+            )
+        }
+        return (
+            <h4 style={{color : check}}>Check!!</h4>
+        )
+    }
     return (
-    <div style={{display:'flex',justifyContent : 'space-around'}}>
-        <div style={{width : '60%',margin:10}}>
+    <div style={styles.root}>
+        <div style={styles.leftPane}>
             <div style={styles.info}>
                 <h3>AI</h3>
                 { isPlaying!==null && isPlaying==='a' ? <h5>Playing...</h5> : null }
@@ -399,60 +428,32 @@ const Game = ({initialTurn,name,setDisplay})=>{
                 { isPlaying!==null && isPlaying==='y' ? <h5>Playing...</h5>: null }
             </div>
         </div>
-        <div style={{width : '40%',position:'relative'}}>
-            <div style={{
-                display : 'flex',
-                justifyContent : 'space-between',
-                borderRadius : 10,
-                backgroundColor : 'brown',
-                padding : 20,
-                textAlign : 'center',
-                alignItems : 'center',
-                margin : 10,
-                color : 'white'
-            }}>
+        <div style={styles.rightPane}>
+            <div style={styles.timer}>
                 <div>
                     <Timer setDisplay={setDisplay} 
                         setGameOver={setGameOver}
                         turn={turn}
                 /></div>
-                <h5>Your have 5 minutes to decide a move. After that,game will be over.</h5>
+                {displayMessage()}
             </div>
-            
-            <div style={{
-                maxHeight : '520px',
-                overflow : 'auto'
-            }}>
+            <div style={styles.moveList}>
                 {moves.map(move=>(
-                    <div style={{
-                        display : 'flex',
-                        alignItems : 'center',
-                        textAlign : 'center',
-                        justifyContent : 'space-between',
-                        borderRadius : 10,
-                        backgroundColor : '#c8cfca',
-                        padding : 10,
-                        margin : 10
-                    }} key={move[0]}>
-                        <div style={{
-                            display : 'flex',
-                            alignItems : 'center',
-                            textAlign : 'center'
-                        }}>
-                            <div style={{
-                                width:10,
-                                height:10,
-                                borderRadius : 50,
-                                margin : 5,
-                                backgroundColor : move[2]
-                            }}/>
+                    <div style={styles.move} key={move[0]}>
+                        <div style={styles.moveItem}>
+                            <div style={
+                                {
+                                    width:10,
+                                    height:10,
+                                    borderRadius : 50,
+                                    margin : 5,
+                                    backgroundColor : move[2]
+                                }
+                            }/>
                             <p>{`${move[0]} -> ${move[1]}`}</p>
                         </div>
                         {move[3]===null ? null : (
-                            <div style={{
-                                display : 'flex',
-                                alignItems : 'center',
-                            }}>
+                            <div style={styles.destroyed_image}>
                             <img width='20px'
                                 height={'20px'}
                                 src = {pieces[move[3]].image}
@@ -463,29 +464,9 @@ const Game = ({initialTurn,name,setDisplay})=>{
                     </div> 
                 ))}
             </div>
-            <div style={{
-                position : 'absolute',
-                bottom : 0,
-                right : 0,
-                left:0
-            }}>
-                <div style={{
-                    padding : 10,
-                    textAlign:'center',
-                    borderRadius : 10,
-                    border: 'solid #000',
-                    borderWidth: '1px',
-                    margin : 10
-                }} onClick={()=>undoHandler()}>Undo</div>
-                <div style={{
-                    padding : 10,
-                    textAlign:'center',
-                    borderRadius : 10,
-                    border: 'solid #000',
-                    borderWidth: '1px',
-                    borderColor : 'brown',
-                    margin : 10
-                }} onClick={quitGame}>Abandon</div>
+            <div style={styles.actions}>
+                <div style={styles.undo} onClick={()=>undoHandler()}>Undo</div>
+                <div style={styles.abandon} onClick={quitGame}>Abandon</div>
             </div>
         </div>
     </div>
@@ -493,6 +474,23 @@ const Game = ({initialTurn,name,setDisplay})=>{
 }
 
 const styles = {
+    root : {
+        display:'flex',
+        justifyContent : 'space-around'
+    },
+    leftPane : {
+        width : '60%',
+        margin:10
+    },
+    rightPane : {
+        width : '40%',
+        position:'relative'
+    },
+    rowRender : {
+        display:'flex',
+        justifyContent:'center',
+        alignItems:'center'
+    },
     info : {
         borderRadius : 10,
         border: 'solid #000',
@@ -503,8 +501,64 @@ const styles = {
         padding : 5,
         display:'flex',
         justifyContent : 'space-between'
+    },
+    abandon : {
+        padding : 10,
+        textAlign:'center',
+        borderRadius : 10,
+        border: 'solid #000',
+        borderWidth: '1px',
+        borderColor : 'brown',
+        margin : 10
+    },
+    undo : {
+        padding : 10,
+        textAlign:'center',
+        borderRadius : 10,
+        border: 'solid #000',
+        borderWidth: '1px',
+        margin : 10
+    },
+    actions : {
+        position : 'absolute',
+        bottom : 0,
+        right : 0,
+        left:0
+    },
+    destroyed_image : {
+        display : 'flex',
+        alignItems : 'center',
+    },
+    moveItem : {
+        display : 'flex',
+        alignItems : 'center',
+        textAlign : 'center'
+    },
+    move : {
+        display : 'flex',
+        alignItems : 'center',
+        textAlign : 'center',
+        justifyContent : 'space-between',
+        borderRadius : 10,
+        backgroundColor : '#c8cfca',
+        padding : 10,
+        margin : 10
+    },
+    moveList : {
+        maxHeight : '520px',
+        overflow : 'auto'
+    },
+    timer : {
+        display : 'flex',
+        justifyContent : 'space-between',
+        borderRadius : 10,
+        backgroundColor : 'brown',
+        padding : 20,
+        textAlign : 'center',
+        alignItems : 'center',
+        margin : 10,
+        color : 'white'
     }
 }
 
 export default Game;
-// check and checkmate

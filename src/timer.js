@@ -22,8 +22,8 @@ const Timer = ({
         let { total, minutes, seconds } 
                     = getTimeRemaining(e);
         if(minutes===0 && seconds===0){
-            setDisplay(0);
             setGameOver(true)
+            setDisplay(0);
             return;
         }
 
@@ -67,8 +67,6 @@ const Timer = ({
     // We can use useEffect so that when the component
     // mount the timer will start as soon as possible
   
-    // We put empty array to act as componentDid
-    // mount only
     useEffect(() => {
         stopTimer(getDeadTime());
     }, [turn]);
