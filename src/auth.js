@@ -23,7 +23,7 @@ const styles = {
         margin:10,
         padding:10,
         borderRadius : 10,
-        width : '10%',
+        width : '100px',
         backgroundColor:'yellow',
         color:'black'
     },

@@ -55,6 +55,7 @@ const Game = ({initialTurn,name,setDisplay})=>{
         setGameOver(false);
         setPawnPromotions({});
         setisPlaying('y');
+        setGameOver(true)
         setDisplay(0);
     }
 
@@ -287,6 +288,9 @@ const Game = ({initialTurn,name,setDisplay})=>{
     
     
     React.useEffect(()=>{
+        if(gameOver===true){
+            return;
+        }
         if(turn!==initialTurn){
             if(utils.isinCheck(turn,{...positions})){
                 setGameOver(true);
@@ -313,10 +317,11 @@ const Game = ({initialTurn,name,setDisplay})=>{
                 } 
             } 
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     },[turn])
 
     const undoHandler = ()=>{
-        if(moves.length===0){
+        if(moves.length===0 || gameOver===true){
             return;
         }
         let key;
@@ -428,11 +433,10 @@ const Game = ({initialTurn,name,setDisplay})=>{
                 { isPlaying!==null && isPlaying==='y' ? <h5>Playing...</h5>: null }
             </div>
         </div>
-        <div style={styles.rightPane}>
+        <div style={styles.rightPane} >
             <div style={styles.timer}>
                 <div>
-                    <Timer setDisplay={setDisplay} 
-                        setGameOver={setGameOver}
+                    <Timer quitGame={quitGame}
                         turn={turn}
                 /></div>
                 {displayMessage()}

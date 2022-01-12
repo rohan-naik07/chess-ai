@@ -2,8 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 
 
 const Timer = ({
-    setDisplay,
-    setGameOver,
+    quitGame,
     turn
 })=>{
     const Ref = useRef(null);
@@ -19,11 +18,9 @@ const Timer = ({
   
   
     const startTimer = (e) => {
-        let { total, minutes, seconds } 
-                    = getTimeRemaining(e);
+        let { total, minutes, seconds } = getTimeRemaining(e);
         if(minutes===0 && seconds===0){
-            setGameOver(true)
-            setDisplay(0);
+            quitGame()
             return;
         }
 
@@ -69,6 +66,10 @@ const Timer = ({
   
     useEffect(() => {
         stopTimer(getDeadTime());
+        return ()=>{
+            clearInterval(Ref.current);
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [turn]);
 
     return (
