@@ -57,6 +57,9 @@ export default class Utils {
     }
 
     checkValidMove = (id,selectedLocation,positions,turn,checkPassant)=>{
+        if(id===undefined || id===null){
+            return;
+        }
         if(positions[selectedLocation]===undefined){
             return 0;
         }

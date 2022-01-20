@@ -47,7 +47,7 @@ const Game = ({initialTurn,name,setDisplay})=>{
     let minimax = new MiniMax();
 
     const quitGame = ()=>{
-        setPositions(initialTurn==='white' ?  {...initialPositionsWhite} : {...initialPositionsBlack})
+        setPositions(initialTurn==='white' ?  initialPositionsWhite : initialPositionsBlack)
         setTurn(initialTurn);
         setSelectedLocation(null);
         setMoves([]);
@@ -76,7 +76,6 @@ const Game = ({initialTurn,name,setDisplay})=>{
             setMoved(moved);
             setTurn(turn==='white' ? 'black' : 'white');
         }
-       
         return attacked;
     }
 
@@ -126,6 +125,9 @@ const Game = ({initialTurn,name,setDisplay})=>{
                 delete positions[selectedLocation];
                 positions[`${row}+${newCol-1}`] = positions[rookPos];
                 delete positions[rookPos];
+                moves.push([selectedLocation,id,turn,null,0])
+                moves.push([rookPos,`${row}+${newCol-1}`,turn,null])
+                setMoves(moves)
                 setSelectedLocation(null);
                 setPositions({...positions});
                 setTurn(turn==='white' ? 'black' : 'white');
@@ -163,6 +165,9 @@ const Game = ({initialTurn,name,setDisplay})=>{
                 delete positions[selectedLocation];
                 positions[`${row}+${newCol+1}`] = positions[rookPos];
                 delete positions[rookPos];
+                moves.push([selectedLocation,id,turn,null])
+                moves.push([rookPos,`${row}+${newCol+1}`,turn,null])
+                setMoves(moves)
                 setSelectedLocation(null);
                 setPositions({...positions});
                 setTurn(turn==='white' ? 'black' : 'white');
@@ -291,32 +296,37 @@ const Game = ({initialTurn,name,setDisplay})=>{
         if(gameOver===true){
             return;
         }
-        if(turn!==initialTurn){
-            if(utils.isinCheck(turn,{...positions})){
-                setGameOver(true);
-                return;
-            } else {
-                setCheck(null);
-            } 
-
-            let move = playAI(initialTurn);
-            let selectedLocation = move[0];
-            let id = move[1];
-            setTurn(initialTurn)
-            setisPlaying('y');
-            moves.push([selectedLocation,id,turn,move[2]])
-            setMoves(moves);
-
-            let isCheck = utils.isinCheck(turn,{...positions});
-            let over;
-            if(isCheck===true){
-                setCheck(turn==='white' ? 'black' : 'white' )
-                over = utils.isCheckmated(turn,{...positions});
-                if(over===true){
-                    setGameOver(over);
+        try {
+            if(turn!==initialTurn){
+                if(utils.isinCheck(turn,{...positions})){
+                    setGameOver(true);
+                    return;
+                } else {
+                    setCheck(null);
                 } 
-            } 
+    
+                let move = playAI(initialTurn);
+                let selectedLocation = move[0];
+                let id = move[1];
+                setTurn(initialTurn)
+                setisPlaying('y');
+                moves.push([selectedLocation,id,turn,move[2]])
+                setMoves(moves);
+    
+                let isCheck = utils.isinCheck(turn,{...positions});
+                let over;
+                if(isCheck===true){
+                    setCheck(turn==='white' ? 'black' : 'white' )
+                    over = utils.isCheckmated(turn,{...positions});
+                    if(over===true){
+                        setGameOver(over);
+                    } 
+                } 
+            }
+        } catch (error) {
+            window.alert(error)
         }
+        
         // eslint-disable-next-line react-hooks/exhaustive-deps
     },[turn])
 
@@ -347,7 +357,6 @@ const Game = ({initialTurn,name,setDisplay})=>{
         }
 
         moves.pop();
-
         let yourMove = moves[moves.length-1];
         selectedLocation = yourMove[1];
         id = yourMove[0];
@@ -370,9 +379,20 @@ const Game = ({initialTurn,name,setDisplay})=>{
         }
 
         moves.pop();
-        
         setPositions({...positions});
         setMoves(moves);
+
+        if(yourMove[4]===0){
+            yourMove = moves[moves.length-1];
+            selectedLocation = yourMove[1];
+            id = yourMove[0];
+            positions[id] = positions[selectedLocation];
+            delete positions[selectedLocation];
+            moves.pop();
+            setPositions({...positions});
+            setMoves(moves);
+        }
+
         setTurn(initialTurn);
     }
 
@@ -381,19 +401,21 @@ const Game = ({initialTurn,name,setDisplay})=>{
             {
                 row.map(cell=>{
                     return <div id={`${cell.row}+${cell.col}`} key={`${cell.row}+${cell.col}`} 
-                        style={{
-                            padding:20,
-                            backgroundColor: selectedLocation===`${cell.row}+${cell.col}` ? 'grey' : cell.color,
-                            width:40,
-                            height:40
-                        }}  
-                        onClick={()=>onClickHandler(`${cell.row}+${cell.col}`)}>
+                        style={{backgroundColor: selectedLocation===`${cell.row}+${cell.col}` ? 'grey' : cell.color}} 
+                        className="square" 
+                        onClick={()=>{
+                            try {
+                                onClickHandler(`${cell.row}+${cell.col}`)
+                            } catch (error) {
+                                window.alert(error)
+                            }
+                        }}>
                         {
                             positions[`${cell.row}+${cell.col}`]!==undefined && 
                             pieces[positions[`${cell.row}+${cell.col}`]].destroyed_flag===false ?
-                            <div id={`${cell.row}+${cell.col}`}>
-                                <img width='40px' 
-                                     height='40px' 
+                            <div id={`${cell.row}+${cell.col}`} style={{textAlign : 'center'}}>
+                                <img 
+                                     className="square-image"
                                      alt={`${cell.row}+${cell.col}`} 
                                      src={pieces[positions[`${cell.row}+${cell.col}`]].image}
                                 />
@@ -421,8 +443,8 @@ const Game = ({initialTurn,name,setDisplay})=>{
         )
     }
     return (
-    <div style={styles.root}>
-        <div style={styles.leftPane}>
+    <div className="container">
+        <div className="left-pane">
             <div style={styles.info}>
                 <h3>AI</h3>
                 { isPlaying!==null && isPlaying==='a' ? <h5>Playing...</h5> : null }
@@ -433,17 +455,17 @@ const Game = ({initialTurn,name,setDisplay})=>{
                 { isPlaying!==null && isPlaying==='y' ? <h5>Playing...</h5>: null }
             </div>
         </div>
-        <div style={styles.rightPane} >
+        <div className="right-pane">
             <div style={styles.timer}>
                 <div>
                     <Timer quitGame={quitGame}
                         turn={turn}
                 /></div>
-                {displayMessage()}
+                <div style={{padding:10}}>{displayMessage()}</div>
             </div>
             <div style={styles.moveList}>
-                {moves.map(move=>(
-                    <div style={styles.move} key={move[0]}>
+                {moves.map((move,index)=>(
+                    <div style={styles.move} key={`${move[0]}->${move[1]}->${index}`}>
                         <div style={styles.moveItem}>
                             <div style={
                                 {
@@ -468,7 +490,7 @@ const Game = ({initialTurn,name,setDisplay})=>{
                     </div> 
                 ))}
             </div>
-            <div style={styles.actions}>
+            <div className="actions">
                 <div style={styles.undo} onClick={()=>undoHandler()}>Undo</div>
                 <div style={styles.abandon} onClick={quitGame}>Abandon</div>
             </div>
@@ -478,18 +500,6 @@ const Game = ({initialTurn,name,setDisplay})=>{
 }
 
 const styles = {
-    root : {
-        display:'flex',
-        justifyContent : 'space-around'
-    },
-    leftPane : {
-        width : '60%',
-        margin:10
-    },
-    rightPane : {
-        width : '40%',
-        position:'relative'
-    },
     rowRender : {
         display:'flex',
         justifyContent:'center',
@@ -500,8 +510,7 @@ const styles = {
         border: 'solid #000',
         borderWidth: '1px',
         borderColor : 'brown',
-        marginLeft : 20,
-        marginRight : 20,
+        margin : 10,
         padding : 5,
         display:'flex',
         justifyContent : 'space-between'
@@ -522,12 +531,6 @@ const styles = {
         border: 'solid #000',
         borderWidth: '1px',
         margin : 10
-    },
-    actions : {
-        position : 'absolute',
-        bottom : 0,
-        right : 0,
-        left:0
     },
     destroyed_image : {
         display : 'flex',

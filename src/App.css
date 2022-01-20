@@ -3,45 +3,79 @@
   align-items: center;
 }
 
-.App-logo {
-  height: 40vmin;
-  pointer-events: none;
-}
-
-
 h3,h2,h4,h5,p {
   padding: 0px;
   margin: 0px;
 }
 
+.square {
+  padding: 10px;
+  width: 25px;
+  height: 25px;
+}
 
+.square-image {
+  width : 20px;
+  height : 20px;
+}
 
-@media (prefers-reduced-motion: no-preference) {
-  .App-logo {
-    animation: App-logo-spin infinite 20s linear;
+/* For mobile phones: */
+@media only screen and (min-width: 600px) {
+  /* For tablets: */
+  .container {
+    display: flex;
+    justify-content: space-around;
+  }
+  .left-pane {
+    margin:20px;
+  }
+  .right-pane {
+    position: relative;
+  }
+  .actions {
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    left: 0px;
+  }
+  .square {
+    padding: 20px;
+    width: 30px;
+    height: 30px;
+  }
+  .square-image {
+    width : 30px;
+    height : 30px;
   }
 }
 
-.App-header {
-  background-color: #282c34;
-  min-height: 100vh;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  font-size: calc(10px + 2vmin);
-  color: white;
-}
-
-.App-link {
-  color: #61dafb;
-}
-
-@keyframes App-logo-spin {
-  from {
-    transform: rotate(0deg);
+@media only screen and (min-width: 768px) {
+  /* For desktop: */
+  .container {
+    display: flex;
+    justify-content: space-around;
   }
-  to {
-    transform: rotate(360deg);
+  .left-pane {
+    width: 60%;
+    margin:20px;
+  }
+  .right-pane {
+    width: 40%;
+    position: relative;
+  }
+  .actions {
+    position: absolute;
+    bottom: 0px;
+    right: 0px;
+    left: 0px;
+  }
+  .square {
+    padding: 20px;
+    width: 30px;
+    height: 30px;
+  }
+  .square-image {
+    width : 30px;
+    height : 30px;
   }
 }

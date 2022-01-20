@@ -50,7 +50,7 @@ const Auth = ()=>{
 
     return (
         <div style={styles.root}>
-            <div><img width='200px' 
+            <div><img width='250px' 
                 height='150px' 
                 alt={`array`} 
                 src={image}
