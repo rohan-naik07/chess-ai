@@ -190,7 +190,7 @@ const Game = ({initialTurn,name,setDisplay})=>{
     }
 
     const playAI = (turn)=>{
-        let move = minimax.minimaxRoot(3,true, turn==='white' ? 'black' : 'white',{...positions});
+        let move = minimax.minimaxRoot(3,turn==='white' ? true : false, turn==='white' ? 'black' : 'white',{...positions});
         let selectedLocation = move[0];
         let id = move[1];
         if(positions[id]!==undefined){
