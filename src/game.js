@@ -33,7 +33,7 @@ function getBoard(){
 
 const Game = ({initialTurn,name,setDisplay})=>{
     const [positions,setPositions] = React.useState(
-        initialTurn==='white' ?  initialPositionsWhite : initialPositionsBlack
+        initialTurn==='white' ?  {...initialPositionsWhite} : {...initialPositionsBlack}
     );
     const [turn,setTurn] = React.useState(initialTurn);
     const [selectedLocation,setSelectedLocation] = React.useState(null);
@@ -44,10 +44,10 @@ const Game = ({initialTurn,name,setDisplay})=>{
     const [isPlaying,setisPlaying] = React.useState('y');
     const [check,setCheck] = React.useState(null);
     const utils = new Utils();
-    let minimax = new MiniMax();
+    let minimax = new MiniMax(initialTurn);
 
     const quitGame = ()=>{
-        setPositions(initialTurn==='white' ?  initialPositionsWhite : initialPositionsBlack)
+        setPositions(initialTurn==='white' ?  {...initialPositionsWhite} : {...initialPositionsBlack})
         setTurn(initialTurn);
         setSelectedLocation(null);
         setMoves([]);
@@ -190,7 +190,7 @@ const Game = ({initialTurn,name,setDisplay})=>{
     }
 
     const playAI = (turn)=>{
-        let move = minimax.minimaxRoot(3,turn==='white' ? true : false, turn==='white' ? 'black' : 'white',{...positions});
+        let move = minimax.minimaxRoot(3,true, turn==='white' ? 'black' : 'white',{...positions});
         let selectedLocation = move[0];
         let id = move[1];
         if(positions[id]!==undefined){

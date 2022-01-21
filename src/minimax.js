@@ -1,9 +1,10 @@
 import Utils from "./util";
 
 export default class MiniMax {
-    constructor(){
+    constructor(turn){
         this.utils = new Utils();
-        this.pawnEvalWhite =
+        this.turn = turn;
+        let pawnEvalSelf =
             [
                 [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0],
                 [5.0,  5.0,  5.0,  5.0,  5.0,  5.0,  5.0,  5.0],
@@ -15,7 +16,7 @@ export default class MiniMax {
                 [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0]
             ];
         
-        this.pawnEvalBlack = this.reverseArray(this.pawnEvalWhite);
+        let pawnEvalOpponent = this.reverseArray(pawnEvalSelf);
         
         this.knightEval =
             [
@@ -29,7 +30,7 @@ export default class MiniMax {
                 [-5.0, -4.0, -3.0, -3.0, -3.0, -3.0, -4.0, -5.0]
             ];
         
-        this.bishopEvalWhite = [
+        let bishopEvalSelf = [
             [ -2.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -2.0],
             [ -1.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, -1.0],
             [ -1.0,  0.0,  0.5,  1.0,  1.0,  0.5,  0.0, -1.0],
@@ -40,9 +41,9 @@ export default class MiniMax {
             [ -2.0, -1.0, -1.0, -1.0, -1.0, -1.0, -1.0, -2.0]
         ];
         
-        this.bishopEvalBlack = this.reverseArray(this.bishopEvalWhite);
+        let bishopEvlOpponent = this.reverseArray(bishopEvalSelf);
         
-        this.rookEvalWhite = [
+        let rookEvalSelf = [
             [  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0],
             [  0.5,  1.0,  1.0,  1.0,  1.0,  1.0,  1.0,  0.5],
             [ -0.5,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0, -0.5],
@@ -53,7 +54,7 @@ export default class MiniMax {
             [  0.0,   0.0, 0.0,  0.5,  0.5,  0.0,  0.0,  0.0]
         ];
         
-        this.rookEvalBlack = this.reverseArray(this.rookEvalWhite);
+        let rookEvalOpponent = this.reverseArray(rookEvalSelf);
         
         this.evalQueen = [
             [ -2.0, -1.0, -1.0, -0.5, -0.5, -1.0, -1.0, -2.0],
@@ -66,8 +67,7 @@ export default class MiniMax {
             [ -2.0, -1.0, -1.0, -0.5, -0.5, -1.0, -1.0, -2.0]
         ];
         
-        this.kingEvalWhite = [
-        
+        let kingEvalSelf = [
             [ -3.0, -4.0, -4.0, -5.0, -5.0, -4.0, -4.0, -3.0],
             [ -3.0, -4.0, -4.0, -5.0, -5.0, -4.0, -4.0, -3.0],
             [ -3.0, -4.0, -4.0, -5.0, -5.0, -4.0, -4.0, -3.0],
@@ -78,7 +78,27 @@ export default class MiniMax {
             [  2.0,  3.0,  1.0,  0.0,  0.0,  1.0,  3.0,  2.0 ]
         ];
         
-        this.kingEvalBlack = this.reverseArray(this.kingEvalWhite);
+        let kingEvalOpponent = this.reverseArray(kingEvalSelf);
+
+        if(turn==='white'){
+            this.kingEvalWhite = kingEvalSelf;
+            this.rookEvalWhite = rookEvalSelf;
+            this.bishopEvalWhite = bishopEvalSelf;
+            this.pawnEvalWhite = pawnEvalSelf;
+            this.kingEvalBlack = kingEvalOpponent;
+            this.rookEvalBlack = rookEvalOpponent;
+            this.bishopEvalBlack = bishopEvlOpponent;
+            this.pawnEvalBlack = pawnEvalOpponent;
+        } else {
+            this.kingEvalBlack = kingEvalSelf;
+            this.rookEvalBlack = rookEvalSelf;
+            this.bishopEvalBlack = bishopEvalSelf;
+            this.pawnEvalBlack = pawnEvalSelf;
+            this.kingEvalWhite = kingEvalOpponent;
+            this.rookEvalWhite = rookEvalOpponent;
+            this.bishopEvalWhite = bishopEvlOpponent;
+            this.pawnEvalWhite = pawnEvalOpponent;
+        }
         this.squares = [];
         for(let i=0;i<8;i++){
             for(let j=0;j<8;j++){
@@ -243,7 +263,9 @@ export default class MiniMax {
         }
 
         var absoluteValue = this.getAbsoluteValue(piece.substring(6), piece.substring(0,5) === 'white', x ,y);
-        return piece.substring(0,5) === 'white' ? absoluteValue : -absoluteValue;
+        return this.turn==='white' ? 
+        piece.substring(0,5) === 'white' ? absoluteValue : -absoluteValue : 
+        piece.substring(0,5) === 'white' ? -absoluteValue : absoluteValue;
     };
     
 }
