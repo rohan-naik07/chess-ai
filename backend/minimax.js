@@ -245,7 +245,6 @@ class Utils {
     }    
 }
 
-
 class MiniMax {
     constructor(turn){
         this.utils = new Utils();
@@ -516,6 +515,10 @@ class MiniMax {
     
 }
 
+module.exports = {
+    minimax : MiniMax
+}
+/*
 const initialPositionsWhite = {
     '0+0' : 'black0rook',
     '0+1' : 'black0knight',
@@ -555,4 +558,4 @@ const minimax = new MiniMax('white')
 let start = new Date().getTime();
 console.log(minimax.minimaxRoot(3,true,'black',{...initialPositionsWhite}))
 let end = new Date().getTime();
-console.log((end-start)/1000)
+console.log((end-start)/1000)*/

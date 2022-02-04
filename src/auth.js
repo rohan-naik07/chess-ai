@@ -1,6 +1,7 @@
 import React from "react";
 import image from './pieces/ChessPiecesArray.png';
-import Game from './game'
+import { getFromServer, REGISTER_URL } from "./tools/urls";
+
 const styles = {
     root : {
         position : 'fixed',
@@ -32,21 +33,67 @@ const styles = {
 
 const Auth = ()=>{
     const [inputData,setInputData] = React.useState({
-        name : '',
-        initialTurn : ''
+        input_name : '',
+        password : '',
+        confirm_password : ''
     });
-    const [display,setDisplay] = React.useState(0);
-    const onSubmit = (event)=>{
+    const [isSignUp,setSignUp] = React.useState(false);
+    const onSubmit = async (event)=>{
         event.preventDefault();
-        if(inputData.name==='' || inputData.initialTurn===''){
+        if(inputData.input_name==='' || inputData.password===''){
+            window.alert("Please put all the required values")
             return;
         }
-        setDisplay(1);
+        if(isSignUp===true){
+            if(inputData.password!==inputData.confirm_password){
+                window.alert("Please put all the required values")
+                return;
+            }
+            try {
+                const response = getFromServer(
+                    REGISTER_URL,
+                    {
+                        userName: inputData.userName,
+                        password : inputData.password
+                    },
+                    'POST'
+                )
+                if(response.status!==200){
+
+                }
+                if(response.error===true){
+
+                }
+                
+                
+            } catch (error) {
+                
+            }
+        } else {
+            try {
+                const response = getFromServer(
+                    LOGIN_URL,
+                    {
+                        userName: inputData.userName,
+                        password : inputData.password
+                    },
+                    'POST'
+                )
+                if(response.status!==200){
+
+                }
+                if(response.error===true){
+
+                }
+                
+                
+            } catch (error) {
+                
+            }
+        }
     }
-    
-    if(display===1){
-        return <Game initialTurn={inputData.initialTurn} name={inputData.name} setDisplay={setDisplay}/>
-    }
+
+    const onClickh5 = ()=>setSignUp(!isSignUp)
 
     return (
         <div style={styles.root}>
@@ -60,50 +107,49 @@ const Auth = ()=>{
             <br/>
             <div style={styles.temp}>
                 <input type='text' 
-                    placeholder='Enter Your Name' 
+                    placeholder='Enter User Name' 
                     name='name'
                     style={styles.textField} 
-                    value={inputData.name}
+                    value={inputData.input_name}
                     onChange={(event)=>setInputData({
                         ...inputData,
-                        name : event.target.value
+                        input_name : event.target.value
                     })}/>
             </div>
             <br/>
-            <h4>Select your Side</h4>
-            <div style={{
-                ...styles.temp,
-                justifyContent : 'center',
-                display : 'flex'
-            }}>
-                <div style={styles.temp}> 
-                    <button style={{
-                         margin:10,
-                         padding:10,
-                         borderRadius : 10,
-                         backgroundColor: inputData.initialTurn==='white' ?  'yellow'  : 'white',
-                         color:'black'
-                    }} 
-                        onClick={()=>setInputData({
-                            ...inputData,
-                            initialTurn : 'white'
-                        })}>White</button>
-                </div>
-                <div style={styles.temp}> 
-                    <button style={{
-                        margin:10,
-                        padding:10,
-                        borderRadius : 10,
-                        backgroundColor: inputData.initialTurn==='black' ? 'yellow'  : 'black',
-                        color:'white'
-                    }} 
-                        onClick={()=>setInputData({
-                            ...inputData,
-                            initialTurn : 'black'
-                        })}>Black</button>
-                </div>    
+            <div style={styles.temp}>
+                <input type='password' 
+                    placeholder='Enter Password' 
+                    name='password'
+                    style={styles.textField} 
+                    value={inputData.password}
+                    onChange={(event)=>setInputData({
+                        ...inputData,
+                        password : event.target.value
+                    })}/>
             </div>
-            <div style={styles.temp}> <button style={styles.sendButton} onClick={(e)=>onSubmit(e)}>Play</button></div>  
+            <br/>
+            { isSignUp===true ? (
+                <div style={styles.temp}>
+                    <input type='password' 
+                        placeholder='Reenter Password' 
+                        name='confirm_password'
+                        style={styles.textField} 
+                        value={inputData.confirm_password}
+                        onChange={(event)=>setInputData({
+                            ...inputData,
+                            confirm_password : event.target.value
+                        })}/>
+                </div>
+            ) : null }
+            <br/>
+            <div style={styles.temp}> 
+                <button style={styles.sendButton} onClick={(e)=>onSubmit(e)}>{ isSignUp===true ? 'Sign Up' : 'Login'}</button>
+            </div>
+            <br/>
+            <div onClick={()=>onClickh5()}>
+                <h5 style={styles.text}>{ isSignUp===true ? 'Sign In if already registered' : 'Create an account'}</h5>
+            </div>  
         </div>
     );
 }

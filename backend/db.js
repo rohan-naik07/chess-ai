@@ -1,28 +1,5 @@
-
 const mongoose = require('mongoose')
 const { Schema } = mongoose
-const Promise = require("bluebird")
-Promise.promisifyAll(mongoose);
-
-const MoveSchema = new Schema({
-    from : {
-        type : String,
-        required : true
-    },
-    to : {
-        type : String,
-        required : true
-    },
-    turn : {
-        type : String,
-        required : true
-    },
-    captured : {
-        type : String,
-        required : true
-    },
-    passant : Number
-})
 
 const GameSchema = new Schema({
     participant1 : {
@@ -33,23 +10,12 @@ const GameSchema = new Schema({
         type : Schema.Types.ObjectId,
         ref: 'UserSchema'
     },
-    moves : [MoveSchema],
+    played_on : Date,
+    moves : Array,
     result : {
         type : String,
         required : true
     }
-})
-
-const RequestSchema = new Schema({
-    from : {
-        type : Schema.Types.ObjectId,
-        ref: 'UserSchema'
-    },
-    to : {
-        type : Schema.Types.ObjectId,
-        ref: 'UserSchema'
-    },
-    initialTurn : String
 })
 
 const UserSchema = new Schema({
@@ -61,22 +27,15 @@ const UserSchema = new Schema({
         type: String,
         required: true
     },
-    isOnline: {
-        type : Boolean,
-        required : true
-    },
     games : [GameSchema]
 })
 
 
-const Move = mongoose.model('Move', MoveSchema)
 const User = mongoose.model('User', UserSchema)
-const Request = mongoose.model('Request', RequestSchema)
 const Game = mongoose.model('Game', GameSchema);
 
 module.exports = {
     moveModel : Move,
     userModel : User,
-    requestModel : Request,
     gameModel : Game
 }
