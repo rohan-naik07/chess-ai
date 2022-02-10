@@ -17,8 +17,8 @@
   var port = normalizePort(process.env.PORT || '7000');
   app.set('port', port);
 
-  const connection = await mongoose.connect(dbURL);
-  console.log(connection);
+  await mongoose.connect(dbURL);
+  //mongoose.connection.db.dropDatabase(function(err, result) {console.log(result)});
   
   /**
    * Create HTTP server.

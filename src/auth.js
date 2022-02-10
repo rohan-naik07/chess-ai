@@ -1,7 +1,8 @@
 import React from "react";
 import image from './pieces/ChessPiecesArray.png';
-import { getFromServer, REGISTER_URL } from "./tools/urls";
-
+import { getFromServer, REGISTER_URL,LOGIN_URL } from "./tools/urls";
+import { useNavigate } from 'react-router-dom';
+import { Navigate } from "react-router";
 const styles = {
     root : {
         position : 'fixed',
@@ -31,16 +32,18 @@ const styles = {
     text : {color:'white',textAlign:'center'}
 }
 
-const Auth = ()=>{
+const Auth = (props)=>{
+    const {token,setToken} = props
     const [inputData,setInputData] = React.useState({
-        input_name : '',
+        userName : '',
         password : '',
         confirm_password : ''
     });
     const [isSignUp,setSignUp] = React.useState(false);
+    const history = useNavigate();
     const onSubmit = async (event)=>{
         event.preventDefault();
-        if(inputData.input_name==='' || inputData.password===''){
+        if(inputData.userName==='' || inputData.password===''){
             window.alert("Please put all the required values")
             return;
         }
@@ -50,7 +53,7 @@ const Auth = ()=>{
                 return;
             }
             try {
-                const response = getFromServer(
+                const response = await getFromServer(
                     REGISTER_URL,
                     {
                         userName: inputData.userName,
@@ -58,20 +61,23 @@ const Auth = ()=>{
                     },
                     'POST'
                 )
+                console.log(response)
                 if(response.status!==200){
-
+                    window.alert(response.data.message)
                 }
-                if(response.error===true){
-
+                if(response.data.error===true){
+                    window.alert(response.data.message)
                 }
-                
-                
+
+                localStorage.setItem('token',response.data.token)
+                setToken(response.data.token)
+                history('/home');
             } catch (error) {
-                
+                window.alert(error)
             }
         } else {
             try {
-                const response = getFromServer(
+                const response = await getFromServer(
                     LOGIN_URL,
                     {
                         userName: inputData.userName,
@@ -80,20 +86,26 @@ const Auth = ()=>{
                     'POST'
                 )
                 if(response.status!==200){
-
+                    window.alert(response.data.message)
                 }
                 if(response.error===true){
-
+                    window.alert(response.data.message)
                 }
-                
+                localStorage.setItem('token',response.data.token)
+                setToken(response.data.token)
+                history('/home');
                 
             } catch (error) {
-                
+                window.alert(error)
             }
         }
     }
 
     const onClickh5 = ()=>setSignUp(!isSignUp)
+
+    if(token){
+        <Navigate to='/home'/>
+    }
 
     return (
         <div style={styles.root}>
@@ -110,10 +122,10 @@ const Auth = ()=>{
                     placeholder='Enter User Name' 
                     name='name'
                     style={styles.textField} 
-                    value={inputData.input_name}
+                    value={inputData.userName}
                     onChange={(event)=>setInputData({
                         ...inputData,
-                        input_name : event.target.value
+                        userName : event.target.value
                     })}/>
             </div>
             <br/>

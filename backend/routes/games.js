@@ -5,9 +5,8 @@ let games = require('../db').gameModel;
 let users = require('../db').userModel;
 let minimax = require('../minimax').minimax;
 
-router.get(
+router.route('/').get(
     verifyToken,
-    '/',
     function(req,res,next){
         games.create(req.body)
         .then(game=>{
@@ -27,9 +26,8 @@ router.get(
     }
 ) // get a new game id
 
-router.get(
+router.route('/ai').get(
     verifyToken,
-    '/ai',
     function(req,res,next) {
         try {
             let positions = req.body.positions;
@@ -52,9 +50,8 @@ router.get(
     }
 )// get response from AI
 
-router.get(
+router.route('/:userId').get(
     verifyToken,
-    '/:userId',
     function(req,res,next) {
         const user_id = req.params.userId;
         users.findById(user_id)
@@ -87,11 +84,8 @@ router.get(
             });
         })
     }
-) // get all games of a user
-
-router.post(
+).post(
     verifyToken,
-    '/:userId',
     function(req,res,next){
         games.create(req.body)
         .then(game=>{
@@ -141,9 +135,8 @@ router.post(
     }
 ) // save a game of an user
 
-router.delete(
+router.route('/:gameId').delete(
     verifyToken,
-    '/:gameId',
     function(req,res,next){
         const game_id = req.params.gameId;
         games.findByIdAndDelete(game_id)

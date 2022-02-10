@@ -6,6 +6,20 @@ const bcrypt = require("bcrypt");
 
 let onlineUsers = {}
 
+const verifyToken = (req,res,next)=>{
+  const header = req.headers['authorization'];
+  if(typeof header!=='undefined') {
+      const bearer = header.split(' ');
+      const token = bearer[0];
+      console.log(header)
+      req.token = token;
+      next();
+  } else {
+      res.sendStatus(403);
+      res.end('Unauthorized');
+  }
+}
+
 /* GET users listing. */
 router.get(
   '/', 
@@ -18,14 +32,14 @@ router.get(
 router.post(
   '/login',
   function (req,res,next){
-    Users.findOne({userName : req.body.userName})
+    Users.findOne({userName : req.body.data.userName})
     .then(async user=>{
       if (!user)
         return res.status(500).json({
             error: true,
             message: "Invalid Email ID",
         });
-        const validatePassword = await bcrypt.compare( req.body.password,user.password); 
+        const validatePassword = await bcrypt.compare( req.body.data.password,user.password); 
       if (!validatePassword)
           return res.status(500).json({
               error: true,
@@ -56,14 +70,15 @@ router.post(
 router.post(
   '/register',
   async function(req,res,next){
-    Users.findOne({userName : req.body.userName})
+    console.log(req.body)
+    Users.findOne({userName : req.body.data.userName})
     .then(async user=>{
       if (user)
         return res.status(400).json({ error: true, message: "User Already Registered" });
         const salt = await bcrypt.genSalt(10);
-        const password = await bcrypt.hash(req.body.password, salt);
+        const password = await bcrypt.hash(req.body.data.password, salt);
         Users.create({
-          userName : req.body.userName,
+          userName : req.body.data.userName,
           password : password
         })
         .then(user=>{
@@ -102,6 +117,7 @@ router.post(
   async function(req,res,next){
     const _id = req.params.userId;
     onlineUsers[_id] = true;
+    console.log(onlineUsers)
     res.status(200).json({message : 200});
   }
 )
@@ -112,19 +128,21 @@ router.post(
   async function(req,res,next){
      const _id = req.params.userId;
      delete onlineUsers[_id];
+     console.log(onlineUsers)
      res.status(200).json({message : 200});
   }
 )
 
 // get online users
-router.get(
+router.route('/online').get(
   verifyToken,
-  '/online',
   async function(req,res,next){
+    console.log(onlineUsers)
      let users = []
      Object.keys(onlineUsers).forEach(async key=>{
        try {
         let user = await Users.findById(key);
+
         users.push(user);
        } catch (error) {
          console.error(error)
@@ -142,21 +160,8 @@ router.get(
   }
 )
 
-const verifyToken = (req,res,next)=>{
-  const header = req.headers['authorization'];
-  if(typeof header!=='undefined') {
-      const bearer = header.split(' ');
-      const token = bearer[0];
-      console.log(header)
-      req.token = token;
-      next();
-  } else {
-      res.sendStatus(403);
-      res.end('Unauthorized');
-  }
-}
 
 module.exports = {
-  authRouter: authRouter,
+  authRouter: router,
   verifyToken : verifyToken
 }

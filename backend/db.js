@@ -35,7 +35,6 @@ const User = mongoose.model('User', UserSchema)
 const Game = mongoose.model('Game', GameSchema);
 
 module.exports = {
-    moveModel : Move,
     userModel : User,
     gameModel : Game
 }

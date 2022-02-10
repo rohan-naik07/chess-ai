@@ -1,23 +1,17 @@
 import React from "react";
-import { Redirect, Route, Switch } from "react-router-dom";
+import { Route, Routes } from "react-router-dom";
 import Auth from "../auth";
 import Game from '../game';
 import Home from "../home";
 
-const Router = () => {
+const Router = (props) => {
+  const {token,setToken} = props
   return (
-    <Switch>
-      <Route path="/" exact>
-        <Auth/>
-      </Route>
-      <Route path="/home" exact>
-        <Home/>
-      </Route>
-      <Route path="/game/:gameId" exact>
-        <Game/>
-      </Route>
-      <Redirect to="/" />
-    </Switch>
+    <Routes>
+      <Route path="/" exact element={<Auth token={token} setToken={setToken}/>}/>
+      <Route path="/home" exact element={<Home token={token} setToken={setToken}/>}/>
+      <Route path="/game/:gameId" exact element={<Auth/>}/>
+    </Routes>
   );
 };
 
