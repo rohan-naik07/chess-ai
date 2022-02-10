@@ -4,19 +4,20 @@ const jwt = require("jsonwebtoken");
 const Users = require('../db').userModel;
 const bcrypt = require("bcrypt");
 
-let onlineUsers = {}
-
 const verifyToken = (req,res,next)=>{
   const header = req.headers['authorization'];
   if(typeof header!=='undefined') {
       const bearer = header.split(' ');
       const token = bearer[0];
-      console.log(header)
       req.token = token;
       next();
   } else {
-      res.sendStatus(403);
-      res.end('Unauthorized');
+     res.status(403).json(
+       {
+         error : true,
+         message : 'Unauthorized'
+       }
+     )
   }
 }
 
@@ -24,7 +25,14 @@ const verifyToken = (req,res,next)=>{
 router.get(
   '/', 
   function(req, res, next) {
-    res.send('respond with a resource');
+    Users.find({}).then(users=>{
+      res.status(200).json(
+        {
+          error : false,
+          message : users
+        }
+      )
+    })
   }
 )
 
@@ -108,55 +116,6 @@ router.post(
         message: error
       });
     })
-  }
-)
-
-// mark users online
-router.post(
-  '/online/:userId',
-  async function(req,res,next){
-    const _id = req.params.userId;
-    onlineUsers[_id] = true;
-    console.log(onlineUsers)
-    res.status(200).json({message : 200});
-  }
-)
-
-// mark users offline
-router.post(
-  '/offline/:userId',
-  async function(req,res,next){
-     const _id = req.params.userId;
-     delete onlineUsers[_id];
-     console.log(onlineUsers)
-     res.status(200).json({message : 200});
-  }
-)
-
-// get online users
-router.route('/online').get(
-  verifyToken,
-  async function(req,res,next){
-    console.log(onlineUsers)
-     let users = []
-     Object.keys(onlineUsers).forEach(async key=>{
-       try {
-        let user = await Users.findById(key);
-
-        users.push(user);
-       } catch (error) {
-         console.error(error)
-         res.status(500).json({
-           error:true,
-           message : error
-         })
-       }
-     })
-     console.log(users)
-     res.status(200).json({
-       error : false,
-       message : users
-     })
   }
 )
 

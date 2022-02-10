@@ -13,8 +13,7 @@ const GameSchema = new Schema({
     played_on : Date,
     moves : Array,
     result : {
-        type : String,
-        required : true
+        type : String
     }
 })
 

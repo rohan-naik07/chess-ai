@@ -16,9 +16,12 @@
   
   var port = normalizePort(process.env.PORT || '7000');
   app.set('port', port);
-
-  await mongoose.connect(dbURL);
-  //mongoose.connection.db.dropDatabase(function(err, result) {console.log(result)});
+  try {
+    await mongoose.connect(dbURL);
+    //mongoose.connection.db.dropDatabase(function(err, result) {console.log(result)});
+  } catch (error) {
+    console.log(error)
+  }
   
   /**
    * Create HTTP server.
@@ -33,6 +36,7 @@
   
   io.on("connection", (socket) => {
     // ...
+    console.log('connected')
     socket.on("test",(arg)=>console.log(arg));
   });
   

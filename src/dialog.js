@@ -1,5 +1,5 @@
 import React from 'react';
-import { GAME_BASE_URL, getFromServer,GET_GAME_URL,GET_ONLINE_USERS_URL } from "./tools/urls";
+import { GAME_BASE_URL, getFromServer,GET_GAME_URL,GET_USERS_URL } from "./tools/urls";
 import jwt_decode from "jwt-decode";
 import jwtDecode from 'jwt-decode';
 
@@ -65,13 +65,13 @@ const Dialog = props =>{
     const token = localStorage.getItem('token')
     const [onlineUsers,setOnlineUsers] = React.useState([]);
     const [url,setUrl] = React.useState(null);
-    const [user_id,setUserId] = React.useState(null);
+    const [user,setUser] = React.useState(null);
     const [query,setQuery] = React.useState("");
 
     React.useEffect(()=>{
         console.log(showDialog)
         if(showDialog===true){
-            getFromServer(GET_ONLINE_USERS_URL,null,'GET',token).then(response=>{
+            getFromServer(GET_USERS_URL,null,'GET',token).then(response=>{
                 console.log(response)
                 if(response.status!==200){
                     window.alert(response.data.message)
@@ -92,17 +92,17 @@ const Dialog = props =>{
         }
         const date  = new Date()
         const game = {
-            participant1 : jwt_decode(token)._id,
-            participant2 : user_id,
-            played_on : `${date.getDay()} ${date.getMonth()} ${date.getFullYear()}`,
-            moves : [],
-            result : "null"
+            "participant1" : jwt_decode(token)._id,
+            "participant2" : user._id,
+            "played_on" : `${date.getDay()} ${date.getMonth()} ${date.getFullYear()}`,
+            "moves" : [],
+            "result" : "null"
         }
         try {
             const response = await getFromServer(
-                GAME_BASE_URL + jwtDecode(token)._id,
+                GET_GAME_URL,
                 game,
-                'POST',
+                'GET',
                 token
             );
             if(response.status!==200){
@@ -127,7 +127,7 @@ const Dialog = props =>{
     }
 
     const onRefresh = ()=>{
-        getFromServer(GET_ONLINE_USERS_URL,null,'GET',token).then(response=>{
+        getFromServer(GET_USERS_URL,null,'GET',token).then(response=>{
             console.log(response)
             if(response.status!==200){
                 window.alert(response.data.message)
@@ -136,6 +136,7 @@ const Dialog = props =>{
                 window.alert(response.data.message)
             }
             setOnlineUsers(response.data.message)
+            console.log(response.data.message)
         }).catch (error=>{
             window.alert(error)
         })
@@ -159,22 +160,22 @@ const Dialog = props =>{
                         value={query}
                         onChange={onChangeText}/>
                 </div>
-                { user_id===null ? <div style={styles.list}>{
+                { user===null ? <div style={styles.list}>{
                     onlineUsers.map(users=>
                         <div style={styles.listItem}>
                             <h4>{users.userName}</h4>
-                            <div style={styles.refresh}><button onClick={()=>setUserId(users._id)}>Select</button></div>
+                            <div style={styles.refresh}><button onClick={()=>setUser(users)}>Select</button></div>
                         </div>
                         )
                     }
                     </div> : 
                     <div style={styles.selected}>
-                        <h4>{user_id}</h4>
+                        <h4>{user.userName}</h4>
                         <div style={styles.play}>
                             <button onClick={onSubmit}>Play</button>
                         </div>
                         <div style={styles.refresh}>
-                            <button onClick={()=>setUserId(null)}>Cancel</button>
+                            <button onClick={()=>setUser(null)}>Cancel</button>
                         </div>
                     </div>
                 }

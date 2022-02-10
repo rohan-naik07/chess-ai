@@ -5,10 +5,12 @@ let games = require('../db').gameModel;
 let users = require('../db').userModel;
 let minimax = require('../minimax').minimax;
 
+
 router.route('/').get(
     verifyToken,
     function(req,res,next){
-        games.create(req.body)
+        console.log(req.body)
+        games.create(req.body.data)
         .then(game=>{
             console.log(game)
             res.status(200).json({
@@ -17,7 +19,7 @@ router.route('/').get(
             })
         })
         .catch(error=>{
-            console.error(error)
+            //console.error(error)
             res.status(500).json({
                 error: true,
                 message: error
@@ -87,7 +89,7 @@ router.route('/:userId').get(
 ).post(
     verifyToken,
     function(req,res,next){
-        games.create(req.body)
+        games.create(req.body.data)
         .then(game=>{
             console.log(game)
             users.findById(req.params.userId)
@@ -135,7 +137,29 @@ router.route('/:userId').get(
     }
 ) // save a game of an user
 
-router.route('/:gameId').delete(
+router.route('/:gameId')
+.put(
+    verifyToken,
+    function(req,res,next){
+        const game_id = req.params.gameId;
+        games.findByIdAndUpdate(game_id,req.body.data,{new : true})
+        .then(game=>{
+            console.log(game)
+            res.status(200).json({
+                error: false,
+                message: game
+            })
+        })
+        .catch(error=>{
+            console.error(error)
+            res.status(500).json({
+                error: true,
+                message: error
+            });
+        })
+    }
+)
+.delete(
     verifyToken,
     function(req,res,next){
         const game_id = req.params.gameId;

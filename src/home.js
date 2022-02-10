@@ -7,7 +7,11 @@ import { GAME_BASE_URL, getFromServer } from "./tools/urls";
 
 const styles = {
     top : {
-    
+        display : 'flex',
+        justifyContent : 'space-between',
+        padding : 20,
+        textAlign : 'center',
+        alignItems : 'center',
     },
     left : {
 

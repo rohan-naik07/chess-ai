@@ -78,4 +78,10 @@ h3,h2,h4,h5,p {
     width : 30px;
     height : 30px;
   }
+  .home-sub-root{
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin: 10px;
+  }
 }
