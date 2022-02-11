@@ -1,7 +1,6 @@
 import React from 'react';
-import { GAME_BASE_URL, getFromServer,GET_GAME_URL,GET_USERS_URL } from "./tools/urls";
+import { getFromServer,GET_GAME_URL,GET_USERS_URL } from "./tools/urls";
 import jwt_decode from "jwt-decode";
-import jwtDecode from 'jwt-decode';
 
 const styles = {
     root : {
@@ -11,15 +10,18 @@ const styles = {
     header : {
         display : 'flex',
         backgroundColor : 'brown',
+        borderRadius : 10,
         alignItems : 'center',
         textAlign : 'center',
+        overflow : 'hidden',
         padding:5,
         justifyContent : 'space-between'
     },
     refresh : {
         padding : 5,
         borderRadius : 10,
-        backgroundColor : 'brown'
+        backgroundColor : 'brown',
+        color : 'white'
     },
     users : {
        padding : 5 
@@ -34,29 +36,45 @@ const styles = {
     link : {
         display : 'flex',
         margin : 5,
-        backgroundColor : 'grey',
+        backgroundColor : '#c8cfca',
+        border: 'solid #000',
+        borderWidth: '1px',
         color : 'black',
         alignItems : 'center',
         textAlign : 'center',
         padding:5,
         justifyContent : 'space-between'
     },
-    copy : {
-        padding : 5,
-        borderRadius : 10,
-        backgroundColor : 'brown'
-    },
     selected : {
-        display : 'flex',
         alignItems : 'center',
         textAlign : 'center',
-        padding:5,
-        justifyContent : 'space-between'
+        padding:5
     },
     play : {
         padding : 5,
         borderRadius : 10,
         backgroundColor : 'brown'
+    },
+    list : {
+        maxHeight : '150px',
+        overflow : 'auto'
+    },
+    listItem : {
+        display : 'flex',
+        alignItems : 'center',
+        borderRadius : 10,
+        backgroundColor : '#c8cfca',
+        textAlign : 'center',
+        padding:5,
+        justifyContent : 'space-between',
+        marginTop : 10
+    },
+    button : {
+        borderRadius : 10,
+        backgroundColor : 'yellow',
+        padding : 10,
+        color : 'black',
+        fontSize : 10
     }
 }
 
@@ -67,6 +85,7 @@ const Dialog = props =>{
     const [url,setUrl] = React.useState(null);
     const [user,setUser] = React.useState(null);
     const [query,setQuery] = React.useState("");
+    const [turn,setTurn] = React.useState(null);
 
     React.useEffect(()=>{
         console.log(showDialog)
@@ -96,6 +115,7 @@ const Dialog = props =>{
             "participant2" : user._id,
             "played_on" : `${date.getDay()} ${date.getMonth()} ${date.getFullYear()}`,
             "moves" : [],
+            "initialTurn" : turn,
             "result" : "null"
         }
         try {
@@ -145,10 +165,10 @@ const Dialog = props =>{
     return (
         <div style={styles.root}>
             <div style={styles.header}>
-                <div><h3>Find online users</h3></div>
-                <div style={styles.refresh}>
-                    <button onClick={onRefresh}>Refresh</button>
-                    <span onClick={()=>setShowDialog(false)}>&times;</span>
+                <div><h3>Find users</h3></div>
+                <div>
+                    <button style={styles.button} onClick={onRefresh}>Refresh</button>
+                    <span style={{width : 10,color : 'white',margin:5}} onClick={()=>setShowDialog(false)}>&times;</span>
                 </div>
             </div>
             <div style={styles.users}>
@@ -162,20 +182,43 @@ const Dialog = props =>{
                 </div>
                 { user===null ? <div style={styles.list}>{
                     onlineUsers.map(users=>
-                        <div style={styles.listItem}>
+                        <div style={styles.listItem} key={users._id}>
                             <h4>{users.userName}</h4>
-                            <div style={styles.refresh}><button onClick={()=>setUser(users)}>Select</button></div>
+                            <div><button style={styles.refresh} onClick={()=>setUser(users)}>Select</button></div>
                         </div>
                         )
                     }
                     </div> : 
                     <div style={styles.selected}>
-                        <h4>{user.userName}</h4>
-                        <div style={styles.play}>
-                            <button onClick={onSubmit}>Play</button>
+                        <h4>{`You vs ${user.userName}`}</h4>
+                        <div>
+                            <p>Choose your turn...after discussion with your opponent ofcourse :)</p>
+                            <br/>
+                            <div style={{
+                                display:'flex',
+                                overflow:'hidden',
+                                borderRadius:10,
+                                border: 'solid #000',
+                                borderWidth: '1px'
+                            }}>
+                                <div style={{
+                                    backgroundColor : turn==='white' ? 'grey' : 'white',
+                                    width : '100%',
+                                    padding : 10,
+                                    fontSize:10
+                                }} onClick={()=>setTurn('white')}>White</div>
+                                <div style={{
+                                    backgroundColor : turn==='black' ? 'grey' : 'black',
+                                    width : '100%',
+                                    color : 'white',
+                                    padding : 10,
+                                    fontSize : 10
+                                }}onClick={()=>setTurn('black')}>Black</div>
+                            </div>
                         </div>
-                        <div style={styles.refresh}>
-                            <button onClick={()=>setUser(null)}>Cancel</button>
+                        <div style={{display:'flex',margin:10,justifyContent:'space-around'}}>
+                            <button style={styles.refresh} onClick={onSubmit}>Play</button>
+                            <button style={styles.refresh} onClick={()=>setUser(null)}>Cancel</button>
                         </div>
                     </div>
                 }
@@ -185,14 +228,12 @@ const Dialog = props =>{
                     <h5>Share the below link</h5>
                     <br/>
                     <div style={styles.link}>
-                        <h4>{url}</h4>
-                        <div style={styles.copy}>
-                            <button onClick={()=>navigator.clipboard.writeText(url)}>Copy</button>
-                        </div>
+                        <h5>{url}</h5>
+                        <button style={styles.refresh} onClick={()=>navigator.clipboard.writeText(url)}>Copy</button>
                     </div>
                 </div> : null}
         </div>
     )
 }
-
+//http://localhost:3000/game/620647edc56dfcf217243051
 export default Dialog;

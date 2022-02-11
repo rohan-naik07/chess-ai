@@ -8,7 +8,6 @@ import {
 import Utils from "./util";
 import qdt from './pieces/Chess_qdt60.png';
 import qlt from './pieces/Chess_qlt60.png';
-import MiniMax from "./minimax";
 import './App.css'
 import Timer from "./timer";
 
@@ -31,7 +30,8 @@ function getBoard(){
   return board;
 }
 
-const Game = ({initialTurn,name,setDisplay})=>{
+const Game = ({game,socket})=>{
+    const initialTurn = game.initialTurn;
     const [positions,setPositions] = React.useState(
         initialTurn==='white' ?  {...initialPositionsWhite} : {...initialPositionsBlack}
     );
@@ -44,7 +44,6 @@ const Game = ({initialTurn,name,setDisplay})=>{
     const [isPlaying,setisPlaying] = React.useState('y');
     const [check,setCheck] = React.useState(null);
     const utils = new Utils();
-    let minimax = new MiniMax(initialTurn);
 
     const quitGame = ()=>{
         setPositions(initialTurn==='white' ?  {...initialPositionsWhite} : {...initialPositionsBlack})
@@ -56,7 +55,7 @@ const Game = ({initialTurn,name,setDisplay})=>{
         setPawnPromotions({});
         setisPlaying('y');
         setGameOver(true)
-        setDisplay(0);
+        //emit event
     }
 
     const playMove = (flag,id)=>{
@@ -190,7 +189,7 @@ const Game = ({initialTurn,name,setDisplay})=>{
     }
 
     const playAI = (turn)=>{
-        let move = minimax.minimaxRoot(3,true, turn==='white' ? 'black' : 'white',{...positions});
+        let move = null//minimax.minimaxRoot(3,true, turn==='white' ? 'black' : 'white',{...positions});
         let selectedLocation = move[0];
         let id = move[1];
         if(positions[id]!==undefined){
@@ -216,12 +215,7 @@ const Game = ({initialTurn,name,setDisplay})=>{
         if(gameOver===true){
             return;
         }
-        if(utils.isinCheck(turn,{...positions})===true){
-            setGameOver(true);
-            return;
-        } else {
-            setCheck(null);
-        } 
+
         if(selectedLocation!==null){
             const type = positions[selectedLocation].substring(6);
             const newRow = Number(id.split('+')[0]);
@@ -272,17 +266,10 @@ const Game = ({initialTurn,name,setDisplay})=>{
                 setisPlaying('a');
                 if(flag!==0){
                     moves.push([selectedLocation,id,initialTurn,piece])
+                    //emit event
                     setMoves(moves);
                 }
-                let isCheck = utils.isinCheck(turn,{...positions});
-                let over;
-                if(isCheck===true){
-                    setCheck(turn==='white' ? 'black' : 'white' )
-                    over = utils.isCheckmated(turn,{...positions});
-                    if(over===true){
-                        setGameOver(over);
-                    } 
-                } 
+                
             }
         } else {
             if(positions[id]!==undefined && turn===positions[id].substring(0,5)){
@@ -296,15 +283,25 @@ const Game = ({initialTurn,name,setDisplay})=>{
         if(gameOver===true){
             return;
         }
+        let isCheck = utils.isinCheck('white',{...positions});
+        let over;
+        if(isCheck===true){
+            setCheck('black')
+            over = utils.isCheckmated('white',{...positions});
+            if(over===true){
+                setGameOver(over);
+            } 
+        }
+        isCheck = utils.isinCheck('black',{...positions});
+        if(isCheck===true){
+            setCheck('white')
+            over = utils.isCheckmated('black',{...positions});
+            if(over===true){
+                setGameOver(over);
+            } 
+        }
         try {
             if(turn!==initialTurn){
-                if(utils.isinCheck(turn,{...positions})){
-                    setGameOver(true);
-                    return;
-                } else {
-                    setCheck(null);
-                } 
-    
                 let move = playAI(initialTurn);
                 let selectedLocation = move[0];
                 let id = move[1];
@@ -312,16 +309,6 @@ const Game = ({initialTurn,name,setDisplay})=>{
                 setisPlaying('y');
                 moves.push([selectedLocation,id,turn,move[2]])
                 setMoves(moves);
-    
-                let isCheck = utils.isinCheck(turn,{...positions});
-                let over;
-                if(isCheck===true){
-                    setCheck(turn==='white' ? 'black' : 'white' )
-                    over = utils.isCheckmated(turn,{...positions});
-                    if(over===true){
-                        setGameOver(over);
-                    } 
-                } 
             }
         } catch (error) {
             window.alert(error)
@@ -329,6 +316,21 @@ const Game = ({initialTurn,name,setDisplay})=>{
         
         // eslint-disable-next-line react-hooks/exhaustive-deps
     },[turn])
+
+    React.useEffect(()=>{
+        socket.on("connect", () => {
+            console.log(socket.id); // x8WIv7-mJelg7on_ALbx
+            socket.on("move",function(args){
+
+            })
+            socket.on("undo",function(args){
+
+            })
+            socket.on("abandon",function(args){
+
+            })
+        });
+    },[])
 
     const undoHandler = ()=>{
         if(moves.length===0 || gameOver===true){
@@ -394,6 +396,7 @@ const Game = ({initialTurn,name,setDisplay})=>{
         }
 
         setTurn(initialTurn);
+        // emit event
     }
 
     const getRowRendering = (row,index)=>{
@@ -446,12 +449,12 @@ const Game = ({initialTurn,name,setDisplay})=>{
     <div className="container">
         <div className="left-pane">
             <div style={styles.info}>
-                <h3>AI</h3>
+                <h3>{game.participant1}</h3>
                 { isPlaying!==null && isPlaying==='a' ? <h5>Playing...</h5> : null }
             </div>
             { getBoard().map((row,index)=>getRowRendering(row,index)) }
             <div style={styles.info}>
-                <h3>{name}</h3>
+                <h3>{game.participant1}</h3>
                 { isPlaying!==null && isPlaying==='y' ? <h5>Playing...</h5>: null }
             </div>
         </div>

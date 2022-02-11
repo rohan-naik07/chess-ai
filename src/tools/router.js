@@ -1,7 +1,6 @@
 import React from "react";
 import { Route, Routes } from "react-router-dom";
 import Auth from "../auth";
-import Game from '../game';
 import Home from "../home";
 
 const Router = (props) => {

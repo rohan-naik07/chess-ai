@@ -52,7 +52,7 @@ router.route('/ai').get(
     }
 )// get response from AI
 
-router.route('/:userId').get(
+router.route('/user/:userId').get(
     verifyToken,
     function(req,res,next) {
         const user_id = req.params.userId;
@@ -138,6 +138,27 @@ router.route('/:userId').get(
 ) // save a game of an user
 
 router.route('/:gameId')
+.get(
+    verifyToken,
+    function(req,res){
+        const game_id = req.params.gameId;
+        games.findById(game_id)
+        .then(game=>{
+            console.log(game)
+            res.status(200).json({
+                error: false,
+                message: game
+            })
+        })
+        .catch(error=>{
+            console.error(error)
+            res.status(500).json({
+                error: true,
+                message: error
+            });
+        })
+    }
+)
 .put(
     verifyToken,
     function(req,res,next){

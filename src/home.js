@@ -14,10 +14,24 @@ const styles = {
         alignItems : 'center',
     },
     left : {
-
+        padding : 10,
+        textAlign : 'center',
+        alignItems : 'center',
+        justifyContent : 'center',
+        height:'100%'
     },
     right : {
-
+        padding : 10,
+        alignItems : 'center',
+        justifyContent : 'center'
+    },
+    button : {
+        borderRadius : 10,
+        backgroundColor : 'brown',
+        padding : 10,
+        color : 'white',
+        margin : 10,
+        fontSize : 20
     }
 }
 
@@ -28,8 +42,10 @@ const Home = (props)=>{
     const history = useNavigate()
 
     const renderGame = (game)=>(
-        <div>
-            
+        <div key={game._id}>
+            <div>
+
+            </div>
         </div>
     )
     
@@ -58,26 +74,41 @@ const Home = (props)=>{
         <div className="home-root">
             <div style={styles.top}>
                 <div><h2>Chess.ai</h2></div>
-                <div><button onClick={onLogout}>Logout</button></div>
+                <div><button style={styles.button} onClick={onLogout}>Logout</button></div>
             </div>
             <div className="home-sub-root">
                 <div style={styles.left}>
-                    <div><img width='200px' 
-                        height='100px' 
+                    <div><img width='300px' 
+                        height='150px' 
                         alt={`home-image`} 
                         src={image}
                     /></div>
                     {
                         showDialog===false ? 
                         <React.Fragment>
-                            <div><button onClick={()=>setShowDialog(true)}>Play with Friend</button></div>
-                            <div><button>Play with AI</button></div>
+                            <div><button style={styles.button} onClick={()=>setShowDialog(true)}>Play with Friend</button></div>
+                            <div><button style={styles.button}>Play with AI</button></div>
                         </React.Fragment> : 
                         <Dialog setShowDialog={setShowDialog} showDialog={showDialog}/>
                     }
                 </div>
                 <div style={styles.right}>
-                    {userGames.map(game=>renderGame(game))}
+                    <div style={styles.button}><h3>Welcome User</h3></div>
+                    {
+                        userGames.length===0 ? 
+                        <div style={{
+                            padding : 10,
+                            borderRadius : 10,
+                            margin:10,
+                            backgroundColor : '#c8cfca',
+                            textAlign : 'center'
+                        }}>
+                            No games played as of now
+                        </div> 
+                        : <React.Fragment>
+                            {userGames.map(game=>renderGame(game))}
+                        </React.Fragment>
+                    }
                 </div>
             </div>
         </div>

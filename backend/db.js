@@ -11,7 +11,8 @@ const GameSchema = new Schema({
         ref: 'UserSchema'
     },
     played_on : Date,
-    moves : Array,
+    moves : [Array],
+    initialTurn : String,
     result : {
         type : String
     }

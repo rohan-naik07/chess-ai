@@ -37,7 +37,15 @@
   io.on("connection", (socket) => {
     // ...
     console.log('connected')
-    socket.on("test",(arg)=>console.log(arg));
+    socket.on("move",function(args){
+
+    })
+    socket.on("undo",function(args){
+
+    })
+    socket.on("abandon",function(args){
+
+    })
   });
   
   /**

@@ -3,7 +3,7 @@
   align-items: center;
 }
 
-h3,h2,h4,h5,p {
+h3,h2,h4,h5,h6,h1,p {
   padding: 0px;
   margin: 0px;
 }
@@ -80,8 +80,8 @@ h3,h2,h4,h5,p {
   }
   .home-sub-root{
     display: flex;
-    justify-content: space-between;
-    align-items: center;
+    justify-content: space-around;
+    height: max-content;
     margin: 10px;
   }
 }
