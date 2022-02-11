@@ -55,6 +55,7 @@ const Game = ({game,socket})=>{
         setPawnPromotions({});
         setisPlaying('y');
         setGameOver(true)
+        // update game with moves and result
         //emit event
     }
 
@@ -320,14 +321,15 @@ const Game = ({game,socket})=>{
     React.useEffect(()=>{
         socket.on("connect", () => {
             console.log(socket.id); // x8WIv7-mJelg7on_ALbx
+            socket.emit("join-room",{roomId : game._id});
             socket.on("move",function(args){
-
+                //opponent played a move
             })
             socket.on("undo",function(args){
 
             })
             socket.on("abandon",function(args){
-
+                quitGame();
             })
         });
     },[])

@@ -3,6 +3,7 @@
 /**
  * Module dependencies.
  */
+
 (async ()=>{
   var app = require('../app');
   var debug = require('debug')('backend:server');
@@ -33,18 +34,20 @@
       origin: "http://localhost:3000"
     }
   });
-  
+
+
   io.on("connection", (socket) => {
     // ...
     console.log('connected')
+    socket.on("join-room",(args)=>socket.join(args.roomId))
     socket.on("move",function(args){
-
+      io.to(args.room).emit("move",args)
     })
     socket.on("undo",function(args){
-
+      io.to(args.room).emit("undo",args)
     })
     socket.on("abandon",function(args){
-
+      io.to(args.room).emit("abandon",args)
     })
   });
   
@@ -116,4 +119,3 @@
     debug('Listening on ' + bind);
   }
 })();
-
