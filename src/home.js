@@ -1,6 +1,6 @@
 import jwtDecode from "jwt-decode";
 import React from "react";
-import { useNavigate } from "react-router";
+import { Navigate, useNavigate } from "react-router";
 import Dialog from "./dialog";
 import image from './pieces/ChessPiecesArray.png';
 import { GAME_BASE_URL, getFromServer } from "./tools/urls";
@@ -69,6 +69,10 @@ const Home = (props)=>{
             window.alert(error)
         })
     },[])
+
+    if(token===null){
+        return <Navigate to = '/'/>
+    }
     
     return (
         <div className="home-root">

@@ -40,14 +40,14 @@ router.get(
 router.post(
   '/login',
   function (req,res,next){
-    Users.findOne({userName : req.body.data.userName})
+    Users.findOne({userName : req.body.userName})
     .then(async user=>{
       if (!user)
         return res.status(500).json({
             error: true,
             message: "Invalid Email ID",
         });
-        const validatePassword = await bcrypt.compare( req.body.data.password,user.password); 
+        const validatePassword = await bcrypt.compare( req.body.password,user.password); 
       if (!validatePassword)
           return res.status(500).json({
               error: true,
@@ -79,14 +79,14 @@ router.post(
   '/register',
   async function(req,res,next){
     console.log(req.body)
-    Users.findOne({userName : req.body.data.userName})
+    Users.findOne({userName : req.body.userName})
     .then(async user=>{
       if (user)
         return res.status(400).json({ error: true, message: "User Already Registered" });
         const salt = await bcrypt.genSalt(10);
-        const password = await bcrypt.hash(req.body.data.password, salt);
+        const password = await bcrypt.hash(req.body.password, salt);
         Users.create({
-          userName : req.body.data.userName,
+          userName : req.body.userName,
           password : password
         })
         .then(user=>{

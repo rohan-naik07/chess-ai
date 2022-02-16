@@ -102,9 +102,9 @@ const Auth = (props)=>{
     }
 
     const onClickh5 = ()=>setSignUp(!isSignUp)
-
+    console.log(token)
     if(token){
-        <Navigate to='/home'/>
+        return <Navigate to='/home'/>
     }
 
     return (

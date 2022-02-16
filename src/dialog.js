@@ -109,21 +109,17 @@ const Dialog = props =>{
         if(token===null){
             return;
         }
-        const date  = new Date()
         const game = {
-            "participant1" : jwt_decode(token)._id,
             "participant2" : user._id,
-            "played_on" : `${date.getDay()} ${date.getMonth()} ${date.getFullYear()}`,
-            "moves" : [],
             "initialTurn" : turn,
-            "result" : "null"
         }
         try {
             const response = await getFromServer(
                 GET_GAME_URL,
                 game,
                 'GET',
-                token
+                token,
+                true
             );
             if(response.status!==200){
                 window.alert(response.data.message)

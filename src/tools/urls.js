@@ -19,34 +19,50 @@ export const getFromServer = async (
     url,
     body,
     method,
-    token
+    token,
+    putinParams
 )=>{
     let response;
+    let config;
     switch(method){
         case 'GET' :
-            response = await axios.get(url,{
-                data: body,
-                headers : getHeader(token)
-            });
+            if(putinParams===true){
+                config = {
+                    headers: { authorization: `Bearer ${token}`,'Content-Type': 'application/json' },
+                    params : {
+                        'body' : JSON.stringify(body)
+                    }
+                };
+                response = await axios.get(url,config);
+            } else {
+                config = {
+                    data : body,
+                    headers: { authorization: `Bearer ${token}`,'Content-Type': 'application/json' }
+                };
+                response = await axios.get(url,config);
+            }
             break;
         case 'PUT' :
-            response = await axios.put(url,{
-                data:body,
-                headers : getHeader(token)
-            });
+            config = {
+                data : body,
+                headers: { authorization: `Bearer ${token}`,'Content-Type': 'application/x-www-form-urlencoded' }
+            };
+            response = await axios.put(url,config);
             break;
         case 'POST' :
-            response = await axios.post(url,{
-                data:body,
-                headers : getHeader(token)
-            });
+            config = {
+                headers: { authorization: `Bearer ${token}` }
+            };
+            response = await axios.post(url,body,config);
             break;
         case 'DELETE' :
-            response = await axios.delete(url,{
-                data:body,
-                headers : getHeader(token)
-            });
+            config = {
+                data : body,
+                headers: { authorization: `Bearer ${token}`,'Content-Type': 'application/x-www-form-urlencoded' }
+            };
+            response = await axios.delete(url,config);
             break;
+        default : break;
     }
     return response;
 }

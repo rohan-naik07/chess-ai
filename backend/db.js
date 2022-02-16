@@ -4,11 +4,11 @@ const { Schema } = mongoose
 const GameSchema = new Schema({
     participant1 : {
         type : Schema.Types.ObjectId,
-        ref: 'UserSchema'
+        ref: 'User'
     },
     participant2 : {
         type : Schema.Types.ObjectId,
-        ref: 'UserSchema'
+        ref: 'User'
     },
     played_on : Date,
     moves : [Array],

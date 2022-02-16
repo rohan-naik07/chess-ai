@@ -1,3 +1,4 @@
+import jwtDecode from "jwt-decode";
 import React from "react";
 import { useNavigate, useParams } from "react-router";
 import Game from "./game";
@@ -11,29 +12,31 @@ const GameWrapper = (props) =>{
     const [game,setGame] = React.useState({});
     console.log(gameId);
     React.useEffect(()=>{
+        if(token==null){
+            history('/');
+            return;
+        }
         getFromServer(GET_GAME_URL+gameId,null,'GET',token)
         .then(response=>{
+            const user_id = jwtDecode(token)._id
             if(
-                gameId===response.data.participant1 ||
-                gameId===response.data.participant2
+                user_id===response.data.message.participant1 ||
+                user_id===response.data.message.participant2
             ){
-                setGame({...response.data})
-                socket.on("disconnect", () => {
-                    console.log(socket.id); // undefined
-                });
+                setGame({...response.data.message})
             } else{
-                history('/');
+                history('/home');
             }
         })
         .catch(error=>{
             window.alert(error)
-            history('/');
+            history('/home');
         })
         return ()=>{
             socket.disconnect()
         }
     },[])
-    return <Game game={game} socket={socket}/>
+    return <Game game={game} socket={socket} token={token}/>
 }
 
 export default GameWrapper;

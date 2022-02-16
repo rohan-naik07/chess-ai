@@ -10,6 +10,7 @@ import qdt from './pieces/Chess_qdt60.png';
 import qlt from './pieces/Chess_qlt60.png';
 import './App.css'
 import Timer from "./timer";
+import jwtDecode from "jwt-decode";
 
 function getBoard(){
   const board = [];
@@ -30,8 +31,10 @@ function getBoard(){
   return board;
 }
 
-const Game = ({game,socket})=>{
-    const initialTurn = game.initialTurn;
+const Game = ({game,socket,token})=>{
+    const initialTurn = jwtDecode(token)._id===game.participant1 ? game.initialTurn : (
+        game.initialTurn==='white' ? 'black' : 'white'
+    );
     const [positions,setPositions] = React.useState(
         initialTurn==='white' ?  {...initialPositionsWhite} : {...initialPositionsBlack}
     );
@@ -46,20 +49,10 @@ const Game = ({game,socket})=>{
     const utils = new Utils();
 
     const quitGame = ()=>{
-        setPositions(initialTurn==='white' ?  {...initialPositionsWhite} : {...initialPositionsBlack})
-        setTurn(initialTurn);
-        setSelectedLocation(null);
-        setMoves([]);
-        setMoved(checkifMoved);
-        setGameOver(false);
-        setPawnPromotions({});
-        setisPlaying('y');
-        setGameOver(true)
         // update game with moves and result
-        //emit event
     }
 
-    const playMove = (flag,id)=>{
+    const playMove = (flag,selectedLocation,id)=>{
         let attacked=null;
         if(flag!==0){
             if(flag===2){
@@ -79,99 +72,59 @@ const Game = ({game,socket})=>{
         return attacked;
     }
 
-    const playPassantMove = (flag,id)=>{
-            pieces[positions[flag]].destroyed_flag = true;
-            positions[id] = positions[selectedLocation];
-            delete positions[selectedLocation];
-            setSelectedLocation(null);
-            setPositions({...positions});
-            setMoved(moved);
-            setTurn(turn==='white' ? 'black' : 'white');
-            return positions[flag]
+    const playPassantMove = (flag,selectedLocation,id)=>{
+        pieces[positions[flag]].destroyed_flag = true;
+        positions[id] = positions[selectedLocation];
+        delete positions[selectedLocation];
+        setSelectedLocation(null);
+        setPositions({...positions});
+        setMoved(moved);
+        setTurn(turn==='white' ? 'black' : 'white');
+        return positions[flag]
     }
 
     const checkCastling = (id)=>{
         const newCol = Number(id.split('+')[1]);
         const row = Number(selectedLocation.split('+')[0]);
         const col = Number(selectedLocation.split('+')[1]);
-        if(newCol > col){
-            let rookPos = null;
-            for(let i=col;i<=7;i++){
-                if(
-                    positions[`${row}+${i}`]!==undefined 
-                    && positions[`${row}+${i}`].substring(6)==='rook' 
-                    && moved[positions[`${row}+${i}`]]===false
-                ){
-                    rookPos = `${row}+${i}`;
-                }
-            }
-            if(rookPos===null){
-                return;
-            }
-            let flag = utils.isinCheck(turn,{...positions})===true;
-            let temp_positions = {...positions};
-            for(let i = col+1;i<=newCol;i++){
-                if(i!==newCol && positions[`${row}+${i}`]!==undefined){
-                    return;
-                } else {
-                    temp_positions[`${row}+${i}`] = temp_positions[selectedLocation];
-                    if(utils.isinCheck(turn,temp_positions)===true){
-                        return;
-                    }
-                }
-            }
-            if(flag===false){
-                positions[id] = positions[selectedLocation];
-                delete positions[selectedLocation];
-                positions[`${row}+${newCol-1}`] = positions[rookPos];
-                delete positions[rookPos];
-                moves.push([selectedLocation,id,turn,null,0])
-                moves.push([rookPos,`${row}+${newCol-1}`,turn,null])
-                setMoves(moves)
-                setSelectedLocation(null);
-                setPositions({...positions});
-                setTurn(turn==='white' ? 'black' : 'white');
+        const condition = newCol > col;
+        let rookPos = null;
+        for(let i=col;condition===true ? i<=7 : i>=0;condition===true ?i++ : i--){
+            if(
+                positions[`${row}+${i}`]!==undefined 
+                && positions[`${row}+${i}`].substring(6)==='rook' 
+                && moved[positions[`${row}+${i}`]]===false
+            ){
+                rookPos = `${row}+${i}`;
             }
         }
-        if(newCol < col){
-            let rookPos = null;
-            for(let i=col;i>=0;i--){
-                if(
-                    positions[`${row}+${i}`]!==undefined && 
-                    positions[`${row}+${i}`].substring(6)==='rook' && 
-                    moved[positions[`${row}+${i}`]]===false
-                ){
-                    rookPos = `${row}+${i}`;
-                }
-            }
-            if(rookPos===null){
+        if(rookPos===null){
+            return;
+        }
+        let flag = utils.isinCheck(turn,{...positions})===true;
+        let temp_positions = {...positions};
+        for(let i = condition===true ? col+1 : col-1;condition===true ? i<=newCol : i>=newCol;condition===true ? i++ : i--){
+            if(i!==newCol && positions[`${row}+${i}`]!==undefined){
                 return;
-            }
-            let flag = utils.isinCheck(turn,{...positions})===true;
-            let temp_positions = {...positions};
-        
-            for(let i = col-1;i>=newCol;i--){
-                if(i!==newCol && positions[`${row}+${i}`]!==undefined){
+            } else {
+                temp_positions[`${row}+${i}`] = temp_positions[selectedLocation];
+                if(utils.isinCheck(turn,{...temp_positions})===true){
                     return;
-                } else {
-                    temp_positions[`${row}+${i}`] = temp_positions[selectedLocation];
-                    if(utils.isinCheck(turn,{...temp_positions})===true){
-                        return;
-                    }
                 }
             }
-            if(flag===false){
-                positions[id] = positions[selectedLocation];
-                delete positions[selectedLocation];
-                positions[`${row}+${newCol+1}`] = positions[rookPos];
-                delete positions[rookPos];
-                moves.push([selectedLocation,id,turn,null])
-                moves.push([rookPos,`${row}+${newCol+1}`,turn,null])
-                setMoves(moves)
-                setSelectedLocation(null);
-                setPositions({...positions});
-                setTurn(turn==='white' ? 'black' : 'white');
-            }
+        }
+        if(flag===false){
+            let newrookPos = condition===true ? `${row}+${newCol-1}` : `${row}+${newCol+1}`;
+            positions[id] = positions[selectedLocation];
+            delete positions[selectedLocation];
+            positions[newrookPos] = positions[rookPos];
+            delete positions[rookPos];
+            moves.push([selectedLocation,id,turn,null,0])
+            moves.push([rookPos,newrookPos,turn,null])
+            setMoves(moves)
+            setSelectedLocation(null);
+            setPositions({...positions});
+            setTurn(turn==='white' ? 'black' : 'white');
         }
     }
 
@@ -261,13 +214,17 @@ const Game = ({game,socket})=>{
                 }
                 let piece;
                 if(typeof(flag)==="string"){
-                    piece = playPassantMove(flag,id);
-                } else piece = playMove(flag,id);
+                    piece = playPassantMove(flag,selectedLocation,id);
+                } else piece = playMove(flag,selectedLocation,id);
 
                 setisPlaying('a');
                 if(flag!==0){
                     moves.push([selectedLocation,id,initialTurn,piece])
                     //emit event
+                    socket.emit("move",{
+                        move : [selectedLocation,id,initialTurn,piece],
+                        flag : flag
+                    })
                     setMoves(moves);
                 }
                 
@@ -301,7 +258,7 @@ const Game = ({game,socket})=>{
                 setGameOver(over);
             } 
         }
-        try {
+        /*try {
             if(turn!==initialTurn){
                 let move = playAI(initialTurn);
                 let selectedLocation = move[0];
@@ -313,7 +270,7 @@ const Game = ({game,socket})=>{
             }
         } catch (error) {
             window.alert(error)
-        }
+        }*/
         
         // eslint-disable-next-line react-hooks/exhaustive-deps
     },[turn])
@@ -324,9 +281,17 @@ const Game = ({game,socket})=>{
             socket.emit("join-room",{roomId : game._id});
             socket.on("move",function(args){
                 //opponent played a move
+                if(initialTurn!==args.move[2]){
+                    moves.push(args.move);
+                    setMoves(moves);
+                    playMove(args.flag,args.move[0],args.move[1])
+                }
             })
+            socket.on("disconnect", () => {
+                console.log(socket.id); // undefined
+            });
             socket.on("undo",function(args){
-
+                undoHandler();
             })
             socket.on("abandon",function(args){
                 quitGame();
@@ -399,6 +364,7 @@ const Game = ({game,socket})=>{
 
         setTurn(initialTurn);
         // emit event
+        socket.emit("undo");
     }
 
     const getRowRendering = (row,index)=>{
@@ -497,7 +463,10 @@ const Game = ({game,socket})=>{
             </div>
             <div className="actions">
                 <div style={styles.undo} onClick={()=>undoHandler()}>Undo</div>
-                <div style={styles.abandon} onClick={quitGame}>Abandon</div>
+                <div style={styles.abandon} onClick={()=>{
+                    socket.emit("abandon");
+                    quitGame();
+                }}>Abandon</div>
             </div>
         </div>
     </div>

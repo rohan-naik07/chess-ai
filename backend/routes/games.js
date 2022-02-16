@@ -1,4 +1,5 @@
 var express = require('express');
+var jwt = require('express-jwt');
 var router = express.Router();
 const verifyToken = require('./users').verifyToken;
 let games = require('../db').gameModel;
@@ -8,19 +9,29 @@ let minimax = require('../minimax').minimax;
 
 router.route('/').get(
     verifyToken,
+    jwt({ secret: 'key', algorithms: ['HS256'] }),
     function(req,res,next){
-        console.log(req.body)
-        games.create(req.body.data)
+        let object = JSON.parse(req.query.body);
+        console.log(object)
+        console.log(req.user._id)
+        games.create({
+            'participant1' : req.user._id,
+            'participant2' : object.participant2,
+            'moves' : [],
+            'result' : 'null',
+            'played_on' : new Date().toISOString(),
+            'initialTurn' : object.initialTurn
+        })
         .then(game=>{
             console.log(game)
-            res.status(200).json({
+            return res.status(200).json({
                 error: false,
                 message: game._id
             })
         })
         .catch(error=>{
             //console.error(error)
-            res.status(500).json({
+            return res.status(500).json({
                 error: true,
                 message: error
             });
@@ -137,11 +148,11 @@ router.route('/user/:userId').get(
     }
 ) // save a game of an user
 
-router.route('/:gameId')
-.get(
+router.route('/:gameId').get(
     verifyToken,
     function(req,res){
         const game_id = req.params.gameId;
+        console.log(game_id)
         games.findById(game_id)
         .then(game=>{
             console.log(game)
@@ -158,8 +169,7 @@ router.route('/:gameId')
             });
         })
     }
-)
-.put(
+).put(
     verifyToken,
     function(req,res,next){
         const game_id = req.params.gameId;

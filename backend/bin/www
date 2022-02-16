@@ -19,7 +19,7 @@
   app.set('port', port);
   try {
     await mongoose.connect(dbURL);
-    //mongoose.connection.db.dropDatabase(function(err, result) {console.log(result)});
+    //mongoose.connection.db.dropCollection('games', function(err, result) {console.log(result)});
   } catch (error) {
     console.log(error)
   }
