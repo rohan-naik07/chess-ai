@@ -292,3 +292,21 @@ export default class Utils {
     }
 
 }
+export default class Pawn{
+
+}
+export default class Queen{
+    
+}
+export default class King{
+    
+}
+export default class Knight{
+    
+}
+export default class Rook{
+
+}
+export default class Bishop{
+
+}
