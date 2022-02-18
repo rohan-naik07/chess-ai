@@ -78,7 +78,6 @@ router.post(
 router.post(
   '/register',
   async function(req,res,next){
-    console.log(req.body)
     Users.findOne({userName : req.body.userName})
     .then(async user=>{
       if (user)

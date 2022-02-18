@@ -10,7 +10,8 @@ const GameWrapper = (props) =>{
     const {gameId} = useParams();
     const history = useNavigate();
     const [game,setGame] = React.useState({});
-    console.log(gameId);
+    const [loading,setLoading] = React.useState(true);
+
     React.useEffect(()=>{
         if(token==null){
             history('/');
@@ -20,22 +21,28 @@ const GameWrapper = (props) =>{
         .then(response=>{
             const user_id = jwtDecode(token)._id
             if(
-                user_id===response.data.message.participant1 ||
-                user_id===response.data.message.participant2
+                user_id===response.data.message.participant1._id ||
+                user_id===response.data.message.participant2._id
             ){
                 setGame({...response.data.message})
             } else{
                 history('/home');
             }
+            setLoading(false)
         })
         .catch(error=>{
+            setLoading(false)
             window.alert(error)
             history('/home');
         })
         return ()=>{
             socket.disconnect()
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     },[])
+    if(loading===true){
+        return <div>Loading...</div>
+    }
     return <Game game={game} socket={socket} token={token}/>
 }
 

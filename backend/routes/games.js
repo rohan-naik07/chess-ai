@@ -12,8 +12,6 @@ router.route('/').get(
     jwt({ secret: 'key', algorithms: ['HS256'] }),
     function(req,res,next){
         let object = JSON.parse(req.query.body);
-        console.log(object)
-        console.log(req.user._id)
         games.create({
             'participant1' : req.user._id,
             'participant2' : object.participant2,
@@ -23,14 +21,13 @@ router.route('/').get(
             'initialTurn' : object.initialTurn
         })
         .then(game=>{
-            console.log(game)
             return res.status(200).json({
                 error: false,
                 message: game._id
             })
         })
         .catch(error=>{
-            //console.error(error)
+            console.error(error)
             return res.status(500).json({
                 error: true,
                 message: error
@@ -152,10 +149,20 @@ router.route('/:gameId').get(
     verifyToken,
     function(req,res){
         const game_id = req.params.gameId;
-        console.log(game_id)
         games.findById(game_id)
+        .populate(
+            {
+                path : 'participant1',
+                model : 'User'
+              }
+        )
+        .populate(
+            {
+                path : 'participant2',
+                model : 'User'
+              }
+        )
         .then(game=>{
-            console.log(game)
             res.status(200).json({
                 error: false,
                 message: game

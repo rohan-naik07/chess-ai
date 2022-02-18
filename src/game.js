@@ -32,11 +32,14 @@ function getBoard(){
 }
 
 const Game = ({game,socket,token})=>{
-    const initialTurn = jwtDecode(token)._id===game.participant1 ? game.initialTurn : (
+    const user_id = jwtDecode(token)._id;
+    const initialTurn = user_id===game.participant1._id ? game.initialTurn : (
         game.initialTurn==='white' ? 'black' : 'white'
     );
+    const player = {...game.participant1} 
+    const opponent = {...game.participant2}
     const [positions,setPositions] = React.useState(
-        initialTurn==='white' ?  {...initialPositionsWhite} : {...initialPositionsBlack}
+        game.initialTurn==='white' ?  {...initialPositionsWhite} : {...initialPositionsBlack}
     );
     const [turn,setTurn] = React.useState(initialTurn);
     const [selectedLocation,setSelectedLocation] = React.useState(null);
@@ -50,6 +53,7 @@ const Game = ({game,socket,token})=>{
 
     const quitGame = ()=>{
         // update game with moves and result
+        
     }
 
     const playMove = (flag,selectedLocation,id)=>{
@@ -67,7 +71,6 @@ const Game = ({game,socket,token})=>{
             setSelectedLocation(null);
             setPositions({...positions});
             setMoved(moved);
-            setTurn(turn==='white' ? 'black' : 'white');
         }
         return attacked;
     }
@@ -79,7 +82,6 @@ const Game = ({game,socket,token})=>{
         setSelectedLocation(null);
         setPositions({...positions});
         setMoved(moved);
-        setTurn(turn==='white' ? 'black' : 'white');
         return positions[flag]
     }
 
@@ -176,7 +178,7 @@ const Game = ({game,socket,token})=>{
             const newCol = Number(id.split('+')[1]);
             const row = Number(selectedLocation.split('+')[0]);
             const col = Number(selectedLocation.split('+')[1]);
-            if(positions[id]!==undefined && turn===positions[id].substring(0,5)){
+            if(positions[id]!==undefined && initialTurn===positions[id].substring(0,5)){
                 setSelectedLocation(id);
             } else {
                 if(type==='king' && Math.abs(newCol-col)>=2 && row===newRow){
@@ -185,7 +187,7 @@ const Game = ({game,socket,token})=>{
                    return;
                 }
                 
-                let flag = utils.checkValidMove(id,selectedLocation,positions,turn,true);
+                let flag = utils.checkValidMove(id,selectedLocation,positions,initialTurn,true);
                 if(type==='pawn'){
                     if(initialTurn==='white'){
                         if(turn==='white' && newRow===0){
@@ -223,14 +225,16 @@ const Game = ({game,socket,token})=>{
                     //emit event
                     socket.emit("move",{
                         move : [selectedLocation,id,initialTurn,piece],
-                        flag : flag
+                        flag : flag,
+                        room : game._id
                     })
                     setMoves(moves);
+                    setTurn(turn==='white' ? 'black' : 'white');
                 }
                 
             }
         } else {
-            if(positions[id]!==undefined && turn===positions[id].substring(0,5)){
+            if(positions[id]!==undefined && initialTurn===positions[id].substring(0,5)){
                 setSelectedLocation(id);
             }
         }
@@ -282,21 +286,23 @@ const Game = ({game,socket,token})=>{
             socket.on("move",function(args){
                 //opponent played a move
                 if(initialTurn!==args.move[2]){
+                    playMove(args.flag,args.move[0],args.move[1])
                     moves.push(args.move);
                     setMoves(moves);
-                    playMove(args.flag,args.move[0],args.move[1])
+                    setTurn(turn==='white' ? 'black' : 'white');
                 }
             })
-            socket.on("disconnect", () => {
-                console.log(socket.id); // undefined
-            });
-            socket.on("undo",function(args){
-                undoHandler();
-            })
-            socket.on("abandon",function(args){
-                quitGame();
-            })
+            socket.on("disconnect", () =>console.log(socket.id));
+            socket.on("undo",()=>undoHandler())
+            socket.on("abandon",()=>quitGame())
         });
+        
+        return ()=>{
+            socket.off("move",()=>console.log("move listener removed"))
+            socket.off("undo",()=>console.log("undo listener removed"))
+            socket.off("abandon",()=>console.log("abandon listener removed"))
+        }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     },[])
 
     const undoHandler = ()=>{
@@ -364,7 +370,7 @@ const Game = ({game,socket,token})=>{
 
         setTurn(initialTurn);
         // emit event
-        socket.emit("undo");
+        socket.emit("undo",{room : game._id});
     }
 
     const getRowRendering = (row,index)=>{
@@ -417,12 +423,12 @@ const Game = ({game,socket,token})=>{
     <div className="container">
         <div className="left-pane">
             <div style={styles.info}>
-                <h3>{game.participant1}</h3>
+                <h3>{opponent.userName}</h3>
                 { isPlaying!==null && isPlaying==='a' ? <h5>Playing...</h5> : null }
             </div>
             { getBoard().map((row,index)=>getRowRendering(row,index)) }
             <div style={styles.info}>
-                <h3>{game.participant1}</h3>
+                <h3>{player.userName}</h3>
                 { isPlaying!==null && isPlaying==='y' ? <h5>Playing...</h5>: null }
             </div>
         </div>
@@ -464,7 +470,7 @@ const Game = ({game,socket,token})=>{
             <div className="actions">
                 <div style={styles.undo} onClick={()=>undoHandler()}>Undo</div>
                 <div style={styles.abandon} onClick={()=>{
-                    socket.emit("abandon");
+                    socket.emit("abandon",{room : game._id});
                     quitGame();
                 }}>Abandon</div>
             </div>

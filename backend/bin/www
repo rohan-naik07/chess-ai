@@ -19,7 +19,7 @@
   app.set('port', port);
   try {
     await mongoose.connect(dbURL);
-    //mongoose.connection.db.dropCollection('games', function(err, result) {console.log(result)});
+    mongoose.connection.db.dropCollection('games', function(err, result) {console.log(result)});
   } catch (error) {
     console.log(error)
   }
@@ -40,15 +40,9 @@
     // ...
     console.log('connected')
     socket.on("join-room",(args)=>socket.join(args.roomId))
-    socket.on("move",function(args){
-      io.to(args.room).emit("move",args)
-    })
-    socket.on("undo",function(args){
-      io.to(args.room).emit("undo",args)
-    })
-    socket.on("abandon",function(args){
-      io.to(args.room).emit("abandon",args)
-    })
+    socket.on("move",(args)=>socket.to(args.room).emit("move",args))
+    socket.on("undo",(args)=>socket.to(args.room).emit("undo"))
+    socket.on("abandon",(args)=>socket.to(args.room).emit("abandon"))
   });
   
   /**
