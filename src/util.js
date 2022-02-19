@@ -1,312 +1,512 @@
+import qdt from './pieces/Chess_qdt60.png';
+import qlt from './pieces/Chess_qlt60.png';
 
-export default class Utils {
+const checkConstraints = position=>(
+    position[0] >= 0 && position[0]<8 &&
+    position[1] >= 0 && position[1]<8 
+)
 
-    static canbeAttackedpassant = {};
-
-    checkConstraints = position=>(
-            position[0] >= 0 && position[0]<8 &&
-            position[1] >= 0 && position[1]<8 
-        )
-
-    checkOverlap = (id,selectedLocation,positions)=>{
-        const nrow = Number(id.split('+')[0]);
-        const ncol = Number(id.split('+')[1]);
-        const crow = Number(selectedLocation.split('+')[0]);
-        const ccol = Number(selectedLocation.split('+')[1]);
-
-        let rowOverlap=false;
-        let colOverlap=false;
-        let forwardDiagonalOverlap = false;
-        let backwardDiagonalOverlap = false;
-
-        Object.keys(positions).forEach(
-            function(position){
-                const row = Number(position.split('+')[0]);
-                const col = Number(position.split('+')[1]);
-                if(nrow===row){ // column should be same for row overlap
-                    if(
-                        (ncol > ccol && col > ccol && ncol > col) ||
-                        (ncol < ccol && col < ccol && ncol < col)
-                    ){
-                        rowOverlap = true;
-                        
-                    }
-                }
-                if(ncol===col){
-                    if(
-                        (nrow < crow && row < crow && nrow < row) ||
-                        (nrow > crow && row > crow && nrow > row)
-                    ){
-                        colOverlap = true;
-                    } 
-                }
-                if(
-                    (nrow > crow && row > crow && nrow>row) || 
-                    (nrow < crow && row < crow && nrow < row)
-                ){
-                    if(nrow + ncol === row + col){
-                        forwardDiagonalOverlap = true;
-                    }
-                    if(nrow - ncol +7 === row - col+7){
-                        backwardDiagonalOverlap = true;
-                    }
-                } 
+const checkRowOverlap = (common_row,col,newCol,positions)=>{
+    if(col < newCol){
+        for(let i=col;i<newCol;i++){
+            if(positions[`${common_row}+${i}`]!=undefined){
+                return true;
             }
-        )
-        return [rowOverlap,colOverlap,forwardDiagonalOverlap,backwardDiagonalOverlap];
+        }
+    } else {
+        for(let i=col;i>newCol;i--){
+            if(positions[`${common_row}+${i}`]!=undefined){
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+const checkColOverlap = (common_col,row,newRow,positions)=>{
+    if(row < newRow){
+        for(let i=row;i<newRow;i++){
+            if(positions[`${i}+${common_col}`]!=undefined){
+                return true;
+            }
+        }
+    } else {
+        for(let i=row;i>newRow;i--){
+            if(positions[`${i}+${common_col}`]!=undefined){
+                return true;
+            }
+        }
+    }
+    return false;
+}
+
+const checkforwardDiagonalOverlap = (row,col,newRow,newCol,positions)=>{
+    let temp_row = row;
+    let temp_col = col;
+    if(row > newRow){
+        for(let i=row+col;i>newRow+newCol;i-=2){
+            if(positions[`${temp_row}+${temp_col}`]!=undefined){
+                return true;
+            }
+            temp_row-=1;
+            temp_col-=1;
+        }
+    } else {
+        for(let i=row+col;i<newRow+newCol;i+=2){
+            if(positions[`${temp_row}+${temp_col}`]!=undefined){
+                return true;
+            }
+            temp_row+=1;
+            temp_col+=1;
+        }
+    }
+    return false;
+}
+
+const checkbackwardDiagonalOverlap = (row,col,newRow,newCol,positions)=>{
+    let temp_row = row;
+    let temp_col = col;
+    if(row > newRow){
+        for(let i=row-col;i>newRow-newCol;i-=2){
+            if(positions[`${temp_row}+${temp_col}`]!=undefined){
+                return true;
+            }
+            temp_row-=1;
+            temp_col-=1;
+        }
+    } else {
+        for(let i=row-col;i<newRow-newCol;i+=2){
+            if(positions[`${temp_row}+${temp_col}`]!=undefined){
+                return true;
+            }
+            temp_row+=1;
+            temp_col+=1;
+        }
+    }
+    return false;
+}
+
+
+const isinCheck = (turn,positions)=>{
+    let kingPosition = null;
+    let flag = false;
+    Object.keys(positions).forEach(position=>{
+        if(positions[position].getColor()!==turn && positions[position].getType()==='king'){
+            kingPosition = position;
+        }
+    })
+    Object.keys(positions).forEach(position=>{
+        if(positions[position].getColor()===turn && position[position].checkValidMove(kingPosition,position,positions,turn)>0){
+            flag = true;
+            return;
+        }
+    })
+    return flag;
+}
+
+export const isCheckmated = (turn,positions)=>{
+    if(isinCheck(turn,positions)===false){
+        return false;
+    }
+    let squares = [];
+    for(let i=0;i<8;i++){
+        for(let j=0;j<8;j++){
+            squares.push(`${i}+${j}`)
+        }
+    }
+    for(let i=0;i<64;i++){
+        if(positions[squares[i]]!==undefined && positions[squares[i]].getColor()!==turn){
+            for(let j=0;j<64;j++){
+                if(positions[squares[i]].checkValidMove(squares[i],squares[j],positions,turn,false)!==0){
+                    let piece = positions[squares[i]]
+                    delete positions[squares[i]]
+                    positions[squares[j]] = piece;
+                    if(isinCheck(turn,positions)===false)
+                        return false;
+                    piece = positions[squares[j]]
+                    delete positions[squares[j]]
+                    positions[squares[i]] = piece;
+                }
+            }
+        }  
+    }
+    return true;
+}
+
+class Piece {
+    constructor(identifier,image){
+        this.identifier = identifier;
+        this.image = image
+        this.color = identifier.substring(0,5);
+        this.type = identifier.substring(6);
+        this.destroyed = false;
     }
 
-    checkValidMove = (id,selectedLocation,positions,turn,checkPassant)=>{
+    setImage = (image)=>this.image=image;
+    setId = (identifier)=>this.identifier = identifier;
+    setDestroyed = (destroyed) => this.destroyed = destroyed;
+    getImage = ()=>{return this.image}
+    getId = ()=>{return this.identifier}
+    getColor = ()=>{return this.color}
+    getType = ()=>{return this.type}
+}
+
+export default class Pawn extends Piece{
+    constructor(identifier,image){
+        super(identifier,image);
+        this.canbeAttackedpassant = false;
+        this.passant_row = null;
+        this.is_promoted = false;
+        this.promotion = null;
+    }
+
+    promote = (turn)=>{
+        this.promotion = new Queen(`${turn}1queen`,turn==='white' ? qlt : qdt);
+        this.is_promoted = true;
+    }
+
+    demote = ()=>{
+        this.promotion = null;
+        this.is_promoted=false;
+    }
+    
+    checkValidMove = (id,selectedLocation,positions,turn)=>{
+        if(this.is_promoted===true){
+            return this.promotion.checkValidMove(id,selectedLocation,positions,turn);
+        }
         if(id===undefined || id===null){
             return;
         }
         if(positions[selectedLocation]===undefined){
             return 0;
         }
-        const type = positions[selectedLocation].substring(6);
+        
         const newRow = Number(id.split('+')[0]);
         const newCol = Number(id.split('+')[1]);
         const row = Number(selectedLocation.split('+')[0]);
         const col = Number(selectedLocation.split('+')[1]);
-        let flag=0;
-        switch(type){
-            case 'king':
-                let square = [
-                    [row+1,col],[row-1,col],[row,col+1],[row,col-1],
-                    [row+1,col+1],[row+1,col-1],[row-1,col+1],[row-1,col-1]
-                ];
-                square.forEach(position=>{
-                    if(this.checkConstraints(position)){
-                        if(newRow===position[0] && newCol===position[1]){
-                            if(
-                                positions[id]===undefined || 
-                                ( positions[id]!==undefined && positions[id].substring(0,5)!==turn )
-                            ){
-                                if(positions[id]!==undefined && positions[id].substring(0,5)!==turn){
-                                flag = 2;
-                                } else flag=1;
-                                return;
-                            } 
-                        }
-                    }
-                })
-                break;
-            case 'queen':
-                const overlapping = this.checkOverlap(id,selectedLocation,positions);
-                if(
-                    this.checkConstraints([newRow,newCol]) &&
-                    ((newRow===row && newCol!==col && overlapping[0]===false) ||
-                    (newRow!==row && newCol===col && overlapping[1]===false) ||
-                    (newRow + newCol === row + col && overlapping[2]===false) ||
-                    (newRow - newCol + 7 === row - col + 7 && overlapping[3]===false))
-                ){
-                    if(positions[id]===undefined ||
-                    (positions[id]!==undefined && positions[id].substring(0,5)!==turn)){
-                        if(positions[id]!==undefined && positions[id].substring(0,5)!==turn){
-                            flag=2;
-                        } else flag=1;
-                    }   
-                }
-                break;
-            case 'bishop':
-                if(
-                    (newRow + newCol === row + col) ||
-                    (newRow - newCol + 7 === row - col + 7)
-                ){
-                    if(this.checkConstraints([newRow,newCol])){
-                        const overlapping = this.checkOverlap(id,selectedLocation,positions);
-                        if(newRow + newCol === row + col && overlapping[2]===true ){
-                            flag=0;
-                            return flag;
-                        }
-                        if(newRow - newCol + 7 === row - col + 7 && overlapping[3]===true){
-                            flag=0;
-                            return flag;
-                        }
-                        if(
-                            positions[`${newRow}+${newCol}`]===undefined || 
-                            ( positions[id]!==undefined && positions[id].substring(0,5)!==turn )
-                        ){
-                            if(positions[id]!==undefined && positions[id].substring(0,5)!==turn){
-                                flag=2;
-                            } else flag=1;
-                        } 
-                    }
-                }
-                break;
-            case 'knight':
-                const moves = [
-                    [row+2,col+1],[row-2,col+1],[row+1,col+2],[row+1,col-2],
-                    [row+2,col-1],[row-2,col-1],[row-1,col+2],[row-1,col-2]
-                ]
-                moves.forEach(position=>{
-                    if(this.checkConstraints(position)){
-                        if(newRow===position[0] && newCol===position[1]){
-                            if(
-                                positions[id]===undefined ||
-                                (positions[id]!==undefined && positions[id].substring(0,5)!==turn)
-                            ){
-                                if(positions[id]!==undefined && positions[id].substring(0,5)!==turn){
-                                flag=2;
-                                }
-                            else flag =1;
-                                return;
-                            } 
-                        }
-                    }
-                })
-                break;
-            case 'rook':
-                if(
-                    (newRow===row && newCol!==col) ||
-                    (newRow!==row && newCol===col) 
-                ){
-                    if(this.checkConstraints([newRow,newCol])){
-                        const overlapping = this.checkOverlap(id,selectedLocation,positions);
-                        if(overlapping[0]===true || overlapping[1]===true){
-                            flag=0;
-                            return flag;
-                        }
-                        if(
-                            positions[`${newRow}+${newCol}`]===undefined ||
-                            (positions[id]!==undefined &&
-                            positions[id].substring(0,5)!==turn)
-                        ){
-                            if(positions[id]!==undefined && positions[id].substring(0,5)!==turn){
-                                flag=2;
-                            }
-                            flag=1;
-                        } 
-                    }
-                }
-                break;
-            case 'pawn':
-                if(checkPassant===true){
-                    if(col===newCol && Math.abs(row-newRow)===2){
-                        // mark pawn eligible for passant
-                        Utils.canbeAttackedpassant[positions[selectedLocation]] = newRow;
-                    } else {
-                        delete Utils.canbeAttackedpassant[positions[selectedLocation]];
-                    }
-                }
-                const plainMoves = [
-                    row===1 || row===6 ? [row+2,col] : [row+10,col+10],
-                    row===1 || row===6 ? [row-2,col] : [row+10,col+10],
-                    [row+1,col],[row-1,col]
-                ]
-                const attackMoves = [
-                    [row-1,col+1],[row+1,col-1],
-                    [row-1,col-1],[row+1,col+1]
-                ]
-                
-                let done=false;
-                attackMoves.forEach(move=>{
-                    if(move[0]===newRow && move[1]===newCol){
-                        if(this.checkConstraints(move)){
-                            if(positions[id]!==undefined && positions[id].substring(0,5)!==turn){
-                                flag=2;
-                                done = true;
-                                return;
-                            } else {
-                                if(checkPassant===true && Utils.canbeAttackedpassant[positions[`${row}+${col-1}`]]!==undefined){
-                                    flag = `${row}+${col-1}`;
-                                    done = true;
-                                    delete Utils.canbeAttackedpassant[positions[`${row}+${col-1}`]];
-                                    return;
-                                }
-                                if(checkPassant===true && Utils.canbeAttackedpassant[positions[`${row}+${col+1}`]]!==undefined){
-                                    flag = `${row}+${col+1}`;
-                                    done = true;
-                                    delete Utils.canbeAttackedpassant[positions[`${row}+${col+1}`]];
-                                    return;
-                                }
-                            }
-                        }
-                    }
-                });
-                if(done===false){
-                    plainMoves.forEach(move=>{
-                        if(move[0]===newRow && move[1]===newCol){
-                            if(this.checkConstraints(move)){
-                                if(
-                                    positions[`${move[0]}+${move[1]}`]===undefined
-                                ){
-                                    flag=1;
-                                    return;
-                                }
-                            }
-                        }
-                    });
-                }
-                break;
-            default : break;
+
+        if(col===newCol && Math.abs(row-newRow)===2){
+            // mark pawn eligible for passant
+            this.canbeAttackedpassant = true
+            this.passant_row = newRow;
+        } else {
+            this.canbeAttackedpassant = false
+            this.passant_row = null;
         }
         
-        return flag;
-    }
-
-    isinCheck = (turn,positions)=>{
-        let kingPosition = null;
-        let flag = false;
-        Object.keys(positions).forEach(position=>{
-            if(positions[position].substring(0,5)!==turn && positions[position].substring(6)==='king'){
-                kingPosition = position;
-            }
-        })
-        Object.keys(positions).forEach(position=>{
-            if(positions[position].substring(0,5)===turn && this.checkValidMove(kingPosition,position,positions,turn,false)>0){
-                flag = true;
-                return;
-            }
-        })
-        return flag;
-    }
-
-    isCheckmated = (turn,positions)=>{
-        if(this.isinCheck(turn,positions)===false){
-            return false;
-        }
-        let squares = [];
-        for(let i=0;i<8;i++){
-            for(let j=0;j<8;j++){
-                squares.push(`${i}+${j}`)
-            }
-        }
-        for(let i=0;i<64;i++){
-            if(positions[squares[i]]!==undefined && positions[squares[i]].substring(0,5)!==turn){
-                for(let j=0;j<64;j++){
-                    if(this.checkValidMove(squares[i],squares[j],positions,turn,false)!==0){
-                        let piece = positions[squares[i]]
-                        delete positions[squares[i]]
-                        positions[squares[j]] = piece;
-                        if(this.isinCheck(turn,positions)===false)
-                            return false;
-                        piece = positions[squares[j]]
-                        delete positions[squares[j]]
-                        positions[squares[i]] = piece;
+        const plainMoves = [
+            row===1 || row===6 ? [row+2,col] : [row+10,col+10],
+            row===1 || row===6 ? [row-2,col] : [row+10,col+10],
+            [row+1,col],[row-1,col]
+        ]
+        const attackMoves = [
+            [row-1,col+1],[row+1,col-1],
+            [row-1,col-1],[row+1,col+1]
+        ]
+        
+        for(let i=0;i<attackMoves.length();i++){
+            let move = attackMoves[i];
+            if(move[0]===newRow && move[1]===newCol){
+                if(checkConstraints(move)){
+                    if(positions[id]!==undefined && positions[id].substring(0,5)!==turn){
+                        return 2;
+                    } else {
+                        if(positions[`${row}+${col-1}`].canbeAttackedpassant===true){
+                            positions[`${row}+${col-1}`].canbeAttackedpassant=false;
+                            return `${row}+${col-1}`;
+                        }
+                        if(positions[`${row}+${col+1}`].canbeAttackedpassant===true){
+                            positions[`${row}+${col+1}`].canbeAttackedpassant=false;
+                            return `${row}+${col+1}`;
+                        }
                     }
                 }
-            }  
+            }
         }
-        return true;
+
+        for(let i=0;i<plainMoves.length();i++){
+            let move = plainMoves[i];
+            if(move[0]===newRow && move[1]===newCol){
+                if(checkConstraints(move) && positions[`${move[0]}+${move[1]}`]===undefined){
+                    return 1;
+                }
+            }
+        }
+        
+        return 0;
+    }
+}
+
+
+export default class Queen extends Piece{
+    constructor(identifier,image){
+        super(identifier,image);
     }
 
-}
-export default class Pawn{
-
-}
-export default class Queen{
+    checkValidMove = (id,selectedLocation,positions,turn)=>{
+        if(id===undefined || id===null){
+            return;
+        }
+        if(positions[selectedLocation]===undefined){
+            return 0;
+        }
+       
+        const newRow = Number(id.split('+')[0]);
+        const newCol = Number(id.split('+')[1]);
+        const row = Number(selectedLocation.split('+')[0]);
+        const col = Number(selectedLocation.split('+')[1]);
     
+        if(checkConstraints([newRow,newCol])){
+            let overlap = false;
+            let allowed = false;
+            if(newRow===row && newCol!==col){
+                overlap = checkRowOverlap(row,col,newCol,positions);
+                allowed = true;
+            }
+            if(newRow!==row && newCol===col){
+                overlap = checkColOverlap(col,row,newRow,positions);
+                allowed = true;
+            }
+            if(newRow + newCol === row + col){
+                overlap = checkforwardDiagonalOverlap(row,col,newRow,newCol,positions);
+                allowed = true;
+            }
+            if(newRow - newCol + 7 === row - col + 7){
+                overlap = checkbackwardDiagonalOverlap(row,col,newRow,newCol,positions);
+                allowed = true;
+            }
+            if(overlap===true || allowed ===false){
+                return 0;
+            }
+            if(positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
+                if(positions[id]!==undefined && positions[id].getColor()!==turn){
+                    return 2;
+                } else {
+                    return 1;
+                }
+            }   
+        }
+        return 0;
+    }
 }
-export default class King{
-    
-}
-export default class Knight{
-    
-}
-export default class Rook{
 
-}
-export default class Bishop{
+export default class King extends Piece{
+    constructor(identifier,image){
+        super(identifier,image);
+        this.moved = false;
+    }
 
+    setMoved = ()=>this.moved = true;
+
+    checkCastling = (id,selectedLocation,positions)=>{
+        const newRow = Number(id.split('+')[0]);
+        const newCol = Number(id.split('+')[1]);
+        const row = Number(selectedLocation.split('+')[0]);
+        const col = Number(selectedLocation.split('+')[1]);
+        if(Math.abs(newCol-col)<2 || row!==newRow){
+            return {
+                newrookPos : null,
+                rookPos : null
+            }
+        }
+        const condition = newCol > col;
+        let rookPos = null;
+        for(let i=col;condition===true ? i<=7 : i>=0;condition===true ?i++ : i--){
+            if(
+                positions[`${row}+${i}`]!==undefined 
+                && positions[`${row}+${i}`].getType()==='rook' 
+                && positions[`${row}+${i}`].moved===false
+            ){
+                rookPos = `${row}+${i}`;
+            }
+        }
+        if(rookPos===null){
+            return;
+        }
+        let flag = isinCheck(turn,{...positions})===true;
+        let temp_positions = {...positions};
+        for(let i = condition===true ? col+1 : col-1;condition===true ? i<=newCol : i>=newCol;condition===true ? i++ : i--){
+            if(i!==newCol && positions[`${row}+${i}`]!==undefined){
+                return;
+            } else {
+                temp_positions[`${row}+${i}`] = temp_positions[selectedLocation];
+                if(isinCheck(turn,{...temp_positions})===true){
+                    return;
+                }
+            }
+        }
+
+        let newrookPos = null;
+        if(flag===false){
+            newrookPos = condition===true ? `${row}+${newCol-1}` : `${row}+${newCol+1}`;
+        }
+        return {
+            newrookPos : newrookPos,
+            rookPos : rookPos
+        }
+    }
+
+
+    checkValidMove = (id,selectedLocation,positions,turn)=>{
+        if(id===undefined || id===null){
+            return;
+        }
+        if(positions[selectedLocation]===undefined){
+            return 0;
+        }
+        
+        const newRow = Number(id.split('+')[0]);
+        const newCol = Number(id.split('+')[1]);
+        const row = Number(selectedLocation.split('+')[0]);
+        const col = Number(selectedLocation.split('+')[1]);
+        
+        let square = [
+            [row+1,col],[row-1,col],[row,col+1],[row,col-1],
+            [row+1,col+1],[row+1,col-1],[row-1,col+1],[row-1,col-1]
+        ];
+
+        for(let i=0;i<square.length();i++){
+            let position = square[i];
+            if(newRow===position[0] && newCol===position[1]){
+                if( positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
+                    if(positions[id]!==undefined && positions[id].getColor()!==turn){
+                        return 2;
+                    } else {
+                        return 1;
+                    }
+                } 
+            }
+        }
+        return 0;
+    }
+}
+
+export default class Knight extends Piece{
+    constructor(identifier,image){
+        super(identifier,image);
+    }
+    checkValidMove = (id,selectedLocation,positions,turn)=>{
+        if(id===undefined || id===null){
+            return;
+        }
+        if(positions[selectedLocation]===undefined){
+            return 0;
+        }
+        
+        const newRow = Number(id.split('+')[0]);
+        const newCol = Number(id.split('+')[1]);
+        const row = Number(selectedLocation.split('+')[0]);
+        const col = Number(selectedLocation.split('+')[1]);
+        
+        const moves = [
+            [row+2,col+1],[row-2,col+1],[row+1,col+2],[row+1,col-2],
+            [row+2,col-1],[row-2,col-1],[row-1,col+2],[row-1,col-2]
+        ]
+
+        for(let i=0;i<moves.length();i++){
+            let position = moves[i];
+            if(newRow===position[0] && newCol===position[1]){
+                if( positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
+                    if(positions[id]!==undefined && positions[id].getColor()!==turn){
+                        return 2;
+                    } else {
+                        return 1;
+                    }
+                } 
+            }
+        }
+        return 0;
+    }
+}
+
+export default class Rook extends Piece{
+    constructor(identifier,image){
+        super(identifier,image);
+        this.moved = false;
+    }
+
+    setMoved = ()=>this.moved = true;
+
+    checkValidMove = (id,selectedLocation,positions,turn)=>{
+        if(id===undefined || id===null){
+            return;
+        }
+        if(positions[selectedLocation]===undefined){
+            return 0;
+        }
+       
+        const newRow = Number(id.split('+')[0]);
+        const newCol = Number(id.split('+')[1]);
+        const row = Number(selectedLocation.split('+')[0]);
+        const col = Number(selectedLocation.split('+')[1]);
+    
+        if(checkConstraints([newRow,newCol])){
+            let overlap = false;
+            let allowed = false;
+            if(newRow===row && newCol!==col){
+                overlap = checkRowOverlap(row,col,newCol,positions);
+                allowed = true;
+            }
+            if(newRow!==row && newCol===col){
+                overlap = checkColOverlap(col,row,newRow,positions);
+                allowed = true;
+            }
+            if(overlap===true || allowed ===false){
+                return 0;
+            }
+            if(positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
+                if(positions[id]!==undefined && positions[id].getColor()!==turn){
+                    return 2;
+                } else {
+                    return 1;
+                }
+            }   
+        }
+        return 0;
+    }
+}
+
+export default class Bishop extends Piece{
+    constructor(identifier,image){
+        super(identifier,image);
+    }
+
+    checkValidMove = (id,selectedLocation,positions,turn)=>{
+        if(id===undefined || id===null){
+            return;
+        }
+        if(positions[selectedLocation]===undefined){
+            return 0;
+        }
+       
+        const newRow = Number(id.split('+')[0]);
+        const newCol = Number(id.split('+')[1]);
+        const row = Number(selectedLocation.split('+')[0]);
+        const col = Number(selectedLocation.split('+')[1]);
+    
+        if(checkConstraints([newRow,newCol])){
+            let overlap = false;
+            let allowed = false;
+            if(newRow + newCol === row + col){
+                overlap = checkforwardDiagonalOverlap(row,col,newRow,newCol,positions);
+                allowed = true;
+            }
+            if(newRow - newCol + 7 === row - col + 7){
+                overlap = checkbackwardDiagonalOverlap(row,col,newRow,newCol,positions);
+                allowed = true;
+            }
+            if(overlap===true || allowed ===false){
+                return 0;
+            }
+            if(positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
+                if(positions[id]!==undefined && positions[id].getColor()!==turn){
+                    return 2;
+                } else {
+                    return 1;
+                }
+            }   
+        }
+        return 0;
+    }
 }

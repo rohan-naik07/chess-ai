@@ -1,13 +1,8 @@
 import React from "react";
 import { 
     initialPositionsWhite,
-    initialPositionsBlack,
-    pieces,
-    checkifMoved 
+    initialPositionsBlack
 } from "./initials";
-import Utils from "./util";
-import qdt from './pieces/Chess_qdt60.png';
-import qlt from './pieces/Chess_qlt60.png';
 import MiniMax from "./minimax";
 import './App.css'
 import Timer from "./timer";
@@ -38,12 +33,8 @@ const Game = ({initialTurn,name,setDisplay})=>{
     const [turn,setTurn] = React.useState(initialTurn);
     const [selectedLocation,setSelectedLocation] = React.useState(null);
     const [moves,setMoves] = React.useState([]);
-    const [moved,setMoved] = React.useState(checkifMoved);
     const [gameOver,setGameOver] = React.useState(false);
-    const [pawnPromotions,setPawnPromotions] = React.useState({});
-    const [isPlaying,setisPlaying] = React.useState('y');
     const [check,setCheck] = React.useState(null);
-    const utils = new Utils();
     let minimax = new MiniMax(initialTurn);
 
     const quitGame = ()=>{
@@ -51,10 +42,6 @@ const Game = ({initialTurn,name,setDisplay})=>{
         setTurn(initialTurn);
         setSelectedLocation(null);
         setMoves([]);
-        setMoved(checkifMoved);
-        setGameOver(false);
-        setPawnPromotions({});
-        setisPlaying('y');
         setGameOver(true)
         setDisplay(0);
     }
@@ -63,152 +50,51 @@ const Game = ({initialTurn,name,setDisplay})=>{
         let attacked=null;
         if(flag!==0){
             if(flag===2){
-                pieces[positions[id]].destroyed_flag = true;
+                positions[id].setDestroyed(true);
                 attacked = positions[id];
             }
-            if(moved[positions[selectedLocation]]!==undefined){
-                moved[positions[selectedLocation]] = true;
+            if(positions[id].getType()==='king'){
+                positions[id].setMoved();
             }
             positions[id] = positions[selectedLocation];
             delete positions[selectedLocation];
             setSelectedLocation(null);
             setPositions({...positions});
-            setMoved(moved);
             setTurn(turn==='white' ? 'black' : 'white');
         }
         return attacked;
     }
 
     const playPassantMove = (flag,id)=>{
-            pieces[positions[flag]].destroyed_flag = true;
+            positions[flag].setDestroyed(true);
             positions[id] = positions[selectedLocation];
             delete positions[selectedLocation];
             setSelectedLocation(null);
             setPositions({...positions});
-            setMoved(moved);
             setTurn(turn==='white' ? 'black' : 'white');
             return positions[flag]
     }
 
-    const checkCastling = (id)=>{
-        const newCol = Number(id.split('+')[1]);
-        const row = Number(selectedLocation.split('+')[0]);
-        const col = Number(selectedLocation.split('+')[1]);
-        if(newCol > col){
-            let rookPos = null;
-            for(let i=col;i<=7;i++){
-                if(
-                    positions[`${row}+${i}`]!==undefined 
-                    && positions[`${row}+${i}`].substring(6)==='rook' 
-                    && moved[positions[`${row}+${i}`]]===false
-                ){
-                    rookPos = `${row}+${i}`;
-                }
-            }
-            if(rookPos===null){
-                return;
-            }
-            let flag = utils.isinCheck(turn,{...positions})===true;
-            let temp_positions = {...positions};
-            for(let i = col+1;i<=newCol;i++){
-                if(i!==newCol && positions[`${row}+${i}`]!==undefined){
-                    return;
-                } else {
-                    temp_positions[`${row}+${i}`] = temp_positions[selectedLocation];
-                    if(utils.isinCheck(turn,temp_positions)===true){
-                        return;
-                    }
-                }
-            }
-            if(flag===false){
-                positions[id] = positions[selectedLocation];
-                delete positions[selectedLocation];
-                positions[`${row}+${newCol-1}`] = positions[rookPos];
-                delete positions[rookPos];
-                moves.push([selectedLocation,id,turn,null,0])
-                moves.push([rookPos,`${row}+${newCol-1}`,turn,null])
-                setMoves(moves)
-                setSelectedLocation(null);
-                setPositions({...positions});
-                setTurn(turn==='white' ? 'black' : 'white');
-            }
-        }
-        if(newCol < col){
-            let rookPos = null;
-            for(let i=col;i>=0;i--){
-                if(
-                    positions[`${row}+${i}`]!==undefined && 
-                    positions[`${row}+${i}`].substring(6)==='rook' && 
-                    moved[positions[`${row}+${i}`]]===false
-                ){
-                    rookPos = `${row}+${i}`;
-                }
-            }
-            if(rookPos===null){
-                return;
-            }
-            let flag = utils.isinCheck(turn,{...positions})===true;
-            let temp_positions = {...positions};
-        
-            for(let i = col-1;i>=newCol;i--){
-                if(i!==newCol && positions[`${row}+${i}`]!==undefined){
-                    return;
-                } else {
-                    temp_positions[`${row}+${i}`] = temp_positions[selectedLocation];
-                    if(utils.isinCheck(turn,{...temp_positions})===true){
-                        return;
-                    }
-                }
-            }
-            if(flag===false){
-                positions[id] = positions[selectedLocation];
-                delete positions[selectedLocation];
-                positions[`${row}+${newCol+1}`] = positions[rookPos];
-                delete positions[rookPos];
-                moves.push([selectedLocation,id,turn,null])
-                moves.push([rookPos,`${row}+${newCol+1}`,turn,null])
-                setMoves(moves)
-                setSelectedLocation(null);
-                setPositions({...positions});
-                setTurn(turn==='white' ? 'black' : 'white');
-            }
-        }
-    }
-
-    const promotePawn = (id,turn,flag)=>{
-        pieces[`${turn}1queen`] = {
-            image : turn==='white' ? qlt : qdt,
-            score : 9,
-            destroyed_flag : false
-        }
-        pawnPromotions[moves.length] = {
-                [`${turn}1queen`] : positions[selectedLocation]
-        }
-        setPawnPromotions({...pawnPromotions});
-        positions[selectedLocation] = `${turn}1queen`;
-        playMove(flag,id);
-    }
-
+    
     const playAI = (turn)=>{
         let move = minimax.minimaxRoot(3,true, turn==='white' ? 'black' : 'white',{...positions});
         let selectedLocation = move[0];
         let id = move[1];
+
         if(positions[id]!==undefined){
             pieces[positions[id]].destroyed_flag = true;
         }
+
         if(positions[id]!==undefined){
-            move.push(positions[id])
+            move.push(positions[id].getId())
         } else {
             move.push(null);
         }
-        if(moved[positions[selectedLocation]]!==undefined){
-            moved[positions[selectedLocation]] = true;
-        }
+       
         positions[id] = positions[selectedLocation];
         delete positions[selectedLocation];
         setSelectedLocation(null);
         setPositions({...positions});
-        setMoved(moved);
         return move;
     }
 
@@ -216,76 +102,65 @@ const Game = ({initialTurn,name,setDisplay})=>{
         if(gameOver===true){
             return;
         }
-        if(utils.isinCheck(turn,{...positions})===true){
-            setGameOver(true);
-            return;
-        } else {
-            setCheck(null);
-        } 
         if(selectedLocation!==null){
-            const type = positions[selectedLocation].substring(6);
-            const newRow = Number(id.split('+')[0]);
-            const newCol = Number(id.split('+')[1]);
-            const row = Number(selectedLocation.split('+')[0]);
-            const col = Number(selectedLocation.split('+')[1]);
-            if(positions[id]!==undefined && turn===positions[id].substring(0,5)){
+            const type = positions[selectedLocation].getType();
+            if(positions[id]!==undefined && turn===positions[id].getColor()){
                 setSelectedLocation(id);
             } else {
-                if(type==='king' && Math.abs(newCol-col)>=2 && row===newRow){
-                    if(moved[positions[selectedLocation]]===false)
-                        checkCastling(id);
+                if(type==='king'){
+                    if(positions[selectedLocation].moved===false){
+                        let castling_positions = positions[selectedLocation].checkCastling(id,selectedLocation,positions);
+                        if(castling_positions.rookPos===null || castling_positions.newRookPos===null){
+                            //play two turns
+                        }
+                    }
                    return;
                 }
                 
-                let flag = utils.checkValidMove(id,selectedLocation,positions,turn,true);
+                let flag = positions[selectedLocation].checkValidMove(id,selectedLocation,positions,turn);
                 if(type==='pawn'){
                     if(initialTurn==='white'){
                         if(turn==='white' && newRow===0){
                             if(flag!==0){
-                                promotePawn(id,turn,flag)
+                                positions[selectedLocation].promote(turn);
                                 return;
                             }
                         }
                         if(turn==='black' && newRow===7){
                             if(flag!==0){
-                                promotePawn(id,turn,flag);
+                                positions[selectedLocation].promote(turn);
+                                return;
                             }
                         }
                     } else {
                         if(turn==='white' && newRow===7){
                             if(flag!==0){
-                                promotePawn(id,turn,flag);
+                                positions[selectedLocation].promote(turn);
+                                return;
                             }
                         }
                         if(turn==='black' && newRow===0){
                             if(flag!==0){
-                                promotePawn(id,turn,flag);
+                                positions[selectedLocation].promote(turn);
+                                return;
                             }
                         }
                     }
                 }
+
                 let piece;
                 if(typeof(flag)==="string"){
                     piece = playPassantMove(flag,id);
                 } else piece = playMove(flag,id);
 
-                setisPlaying('a');
                 if(flag!==0){
                     moves.push([selectedLocation,id,initialTurn,piece])
                     setMoves(moves);
                 }
-                let isCheck = utils.isinCheck(turn,{...positions});
-                let over;
-                if(isCheck===true){
-                    setCheck(turn==='white' ? 'black' : 'white' )
-                    over = utils.isCheckmated(turn,{...positions});
-                    if(over===true){
-                        setGameOver(over);
-                    } 
-                } 
+
             }
         } else {
-            if(positions[id]!==undefined && turn===positions[id].substring(0,5)){
+            if(positions[id]!==undefined && turn===positions[id].getColor()){
                 setSelectedLocation(id);
             }
         }
@@ -334,7 +209,7 @@ const Game = ({initialTurn,name,setDisplay})=>{
         if(moves.length===0 || gameOver===true){
             return;
         }
-        let key;
+        
         let opponentMove = moves[moves.length-1];
         let selectedLocation = opponentMove[1];
         let id = opponentMove[0];
@@ -343,39 +218,6 @@ const Game = ({initialTurn,name,setDisplay})=>{
         if(opponentMove[3]!==null){
             positions[selectedLocation] = opponentMove[3];
             pieces[opponentMove[3]].destroyed_flag = false;
-            if(moved[pieces[opponentMove[3]]]===true){
-                moved[pieces[opponentMove[3]]] = false;
-            }
-        }
-
-        if(pawnPromotions[moves.length]!==undefined){
-            key = Object.keys(pawnPromotions[moves.length])[0];
-            delete pieces[key];
-            positions[pawnPromotions[moves.length][key]] = key;
-            delete pawnPromotions[moves.length];
-            setPawnPromotions(pawnPromotions);
-        }
-
-        moves.pop();
-        let yourMove = moves[moves.length-1];
-        selectedLocation = yourMove[1];
-        id = yourMove[0];
-        positions[id] = positions[selectedLocation];
-        delete positions[selectedLocation];
-        if(yourMove[3]!==null){
-            positions[selectedLocation] = yourMove[3];
-            pieces[yourMove[3]].destroyed_flag = false;
-            if(moved[pieces[yourMove[3]]]===true){
-                moved[pieces[yourMove[3]]] = false;
-            }
-        }
-
-        if(pawnPromotions[moves.length]!==undefined){
-            key = Object.keys(pawnPromotions[moves.length])[0];
-            delete pieces[key];
-            positions[pawnPromotions[moves.length][key]] = key;
-            delete pawnPromotions[moves.length];
-            setPawnPromotions(pawnPromotions);
         }
 
         moves.pop();
@@ -412,12 +254,12 @@ const Game = ({initialTurn,name,setDisplay})=>{
                         }}>
                         {
                             positions[`${cell.row}+${cell.col}`]!==undefined && 
-                            pieces[positions[`${cell.row}+${cell.col}`]].destroyed_flag===false ?
+                            positions[`${cell.row}+${cell.col}`].destroyed===false ?
                             <div id={`${cell.row}+${cell.col}`} style={{textAlign : 'center'}}>
                                 <img 
                                      className="square-image"
                                      alt={`${cell.row}+${cell.col}`} 
-                                     src={pieces[positions[`${cell.row}+${cell.col}`]].image}
+                                     src={positions[`${cell.row}+${cell.col}`].getImage()}
                                 />
                             </div> : null
                         }
