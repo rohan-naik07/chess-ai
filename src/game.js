@@ -6,6 +6,7 @@ import {
 import MiniMax from "./minimax";
 import './App.css'
 import Timer from "./timer";
+import {isinCheck,isCheckmated} from './util';
 
 function getBoard(){
   const board = [];
@@ -46,15 +47,15 @@ const Game = ({initialTurn,name,setDisplay})=>{
         setDisplay(0);
     }
 
-    const playMove = (flag,id)=>{
+    const playMove = (flag,selectedLocation,id)=>{
         let attacked=null;
         if(flag!==0){
             if(flag===2){
                 positions[id].setDestroyed(true);
                 attacked = positions[id];
             }
-            if(positions[id].getType()==='king'){
-                positions[id].setMoved();
+            if(positions[selectedLocation].getType()==='king' || positions[selectedLocation].getType()==='rook'){
+                positions[selectedLocation].setMoved();
             }
             positions[id] = positions[selectedLocation];
             delete positions[selectedLocation];
@@ -65,7 +66,7 @@ const Game = ({initialTurn,name,setDisplay})=>{
         return attacked;
     }
 
-    const playPassantMove = (flag,id)=>{
+    const playPassantMove = (flag,selectedLocation,id)=>{
             positions[flag].setDestroyed(true);
             positions[id] = positions[selectedLocation];
             delete positions[selectedLocation];
@@ -82,11 +83,11 @@ const Game = ({initialTurn,name,setDisplay})=>{
         let id = move[1];
 
         if(positions[id]!==undefined){
-            pieces[positions[id]].destroyed_flag = true;
+            positions[id].setDestroyed(true);
         }
 
         if(positions[id]!==undefined){
-            move.push(positions[id].getId())
+            move.push(positions[id])
         } else {
             move.push(null);
         }
@@ -112,12 +113,15 @@ const Game = ({initialTurn,name,setDisplay})=>{
                         let castling_positions = positions[selectedLocation].checkCastling(id,selectedLocation,positions);
                         if(castling_positions.rookPos===null || castling_positions.newRookPos===null){
                             //play two turns
+                            playMove(1,selectedLocation,id);
+                            playMove(1,castling_positions.newRookPos,castling_positions.rookPos);
                         }
                     }
                    return;
                 }
                 
                 let flag = positions[selectedLocation].checkValidMove(id,selectedLocation,positions,turn);
+                const newRow = Number(id.split('+')[0]);
                 if(type==='pawn'){
                     if(initialTurn==='white'){
                         if(turn==='white' && newRow===0){
@@ -147,11 +151,32 @@ const Game = ({initialTurn,name,setDisplay})=>{
                         }
                     }
                 }
-
+                
                 let piece;
                 if(typeof(flag)==="string"){
-                    piece = playPassantMove(flag,id);
-                } else piece = playMove(flag,id);
+                    piece = playPassantMove(flag,selectedLocation,id);
+                } else {
+                    piece = playMove(flag,selectedLocation,id);
+                }
+
+                let isCheck = isinCheck('white',{...positions});
+                let over;
+                if(isCheck===true){
+                    setCheck('black')
+                    over = isCheckmated('white',{...positions});
+                    if(over===true){
+                        setGameOver(over);
+                    } 
+                }
+                isCheck = isinCheck('black',{...positions});
+                if(isCheck===true){
+                    setCheck('white')
+                    over = isCheckmated('black',{...positions});
+                    if(over===true){
+                        setGameOver(over);
+                    } 
+                }
+
 
                 if(flag!==0){
                     moves.push([selectedLocation,id,initialTurn,piece])
@@ -171,37 +196,38 @@ const Game = ({initialTurn,name,setDisplay})=>{
         if(gameOver===true){
             return;
         }
+        
         try {
             if(turn!==initialTurn){
-                if(utils.isinCheck(turn,{...positions})){
-                    setGameOver(true);
-                    return;
-                } else {
-                    setCheck(null);
-                } 
-    
                 let move = playAI(initialTurn);
                 let selectedLocation = move[0];
                 let id = move[1];
                 setTurn(initialTurn)
-                setisPlaying('y');
                 moves.push([selectedLocation,id,turn,move[2]])
                 setMoves(moves);
-    
-                let isCheck = utils.isinCheck(turn,{...positions});
-                let over;
-                if(isCheck===true){
-                    setCheck(turn==='white' ? 'black' : 'white' )
-                    over = utils.isCheckmated(turn,{...positions});
-                    if(over===true){
-                        setGameOver(over);
-                    } 
-                } 
             }
         } catch (error) {
             window.alert(error)
+            console.error(error)
         }
-        
+
+        let isCheck = isinCheck('white',{...positions});
+        let over;
+        if(isCheck===true){
+            setCheck('black')
+            over = isCheckmated('white',{...positions});
+            if(over===true){
+                setGameOver(over);
+            } 
+        }
+        isCheck = isinCheck('black',{...positions});
+        if(isCheck===true){
+            setCheck('white')
+            over = isCheckmated('black',{...positions});
+            if(over===true){
+                setGameOver(over);
+            } 
+        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     },[turn])
 
@@ -210,31 +236,21 @@ const Game = ({initialTurn,name,setDisplay})=>{
             return;
         }
         
-        let opponentMove = moves[moves.length-1];
-        let selectedLocation = opponentMove[1];
-        let id = opponentMove[0];
+        let move = moves[moves.length-1];
+        let selectedLocation = move[1];
+        let id = move[0];
         positions[id] = positions[selectedLocation];
         delete positions[selectedLocation];
-        if(opponentMove[3]!==null){
-            positions[selectedLocation] = opponentMove[3];
-            pieces[opponentMove[3]].destroyed_flag = false;
+        if(move[3]!==null){
+            positions[selectedLocation] = move[3];
+            move[3].setDestroyed(false);
         }
-
+        if(move[3]!==null && move[3].getType()==='pawn'){
+            move[3].demote();
+        }
         moves.pop();
         setPositions({...positions});
         setMoves(moves);
-
-        if(yourMove[4]===0){
-            yourMove = moves[moves.length-1];
-            selectedLocation = yourMove[1];
-            id = yourMove[0];
-            positions[id] = positions[selectedLocation];
-            delete positions[selectedLocation];
-            moves.pop();
-            setPositions({...positions});
-            setMoves(moves);
-        }
-
         setTurn(initialTurn);
     }
 
@@ -250,6 +266,7 @@ const Game = ({initialTurn,name,setDisplay})=>{
                                 onClickHandler(`${cell.row}+${cell.col}`)
                             } catch (error) {
                                 window.alert(error)
+                                console.error(error)
                             }
                         }}>
                         {
@@ -269,6 +286,7 @@ const Game = ({initialTurn,name,setDisplay})=>{
         </div>
         
     }
+
     const displayMessage = ()=>{
         if(gameOver===true){
             return (
@@ -289,12 +307,12 @@ const Game = ({initialTurn,name,setDisplay})=>{
         <div className="left-pane">
             <div style={styles.info}>
                 <h3>AI</h3>
-                { isPlaying!==null && isPlaying==='a' ? <h5>Playing...</h5> : null }
+                { turn!==initialTurn ? <h5>Playing...</h5> : null }
             </div>
             { getBoard().map((row,index)=>getRowRendering(row,index)) }
             <div style={styles.info}>
                 <h3>{name}</h3>
-                { isPlaying!==null && isPlaying==='y' ? <h5>Playing...</h5>: null }
+                { turn===initialTurn ? <h5>Playing...</h5>: null }
             </div>
         </div>
         <div className="right-pane">
@@ -324,7 +342,7 @@ const Game = ({initialTurn,name,setDisplay})=>{
                             <div style={styles.destroyed_image}>
                             <img width='20px'
                                 height={'20px'}
-                                src = {pieces[move[3]].image}
+                                src = {move[3].getImage()}
                                 alt={'move'}/>
                             <p> captured</p>
                         </div>
@@ -333,7 +351,10 @@ const Game = ({initialTurn,name,setDisplay})=>{
                 ))}
             </div>
             <div className="actions">
-                <div style={styles.undo} onClick={()=>undoHandler()}>Undo</div>
+                <div style={styles.undo} onClick={()=>{
+                    undoHandler();
+                    undoHandler();
+                }}>Undo</div>
                 <div style={styles.abandon} onClick={quitGame}>Abandon</div>
             </div>
         </div>

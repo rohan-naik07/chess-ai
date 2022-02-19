@@ -10,12 +10,7 @@ import ndt from './pieces/Chess_ndt60.png';
 import nlt from './pieces/Chess_nlt60.png';
 import pdt from './pieces/Chess_pdt60.png';
 import plt from './pieces/Chess_plt60.png';
-import Queen from './util';
-import King from './util';
-import Pawn from './util';
-import Knight from './util';
-import Bishop from './util';
-import Rook from './util';
+import {Queen,King,Pawn,Knight,Bishop,Rook} from './util';
 
 export const initialPositionsWhite = {
     '0+0' : new Rook('black0rook',rdt),

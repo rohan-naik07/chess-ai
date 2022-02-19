@@ -1,8 +1,5 @@
-import Utils from "./util";
-
 export default class MiniMax {
     constructor(turn){
-        this.utils = new Utils();
         this.turn = turn;
         let pawnEvalSelf =
             [
@@ -110,9 +107,9 @@ export default class MiniMax {
     generateMoves=(turn,positions)=>{
         let moves = [];
         for(let i=0;i<64;i++){
-            if(positions[this.squares[i]]!==undefined && positions[this.squares[i]].substring(0,5)===turn){
+            if(positions[this.squares[i]]!==undefined && positions[this.squares[i]].getColor()===turn){
                 for(let j=0;j<64;j++){
-                    if(this.utils.checkValidMove(this.squares[j],this.squares[i],positions,turn,false)!==0){
+                    if(positions[this.squares[i]].checkValidMove(this.squares[j],this.squares[i],positions,turn)!==0){
                         moves.push([this.squares[i],this.squares[j]]);
                     }
                 }
@@ -262,10 +259,10 @@ export default class MiniMax {
             return 0;
         }
 
-        var absoluteValue = this.getAbsoluteValue(piece.substring(6), piece.substring(0,5) === 'white', x ,y);
+        var absoluteValue = this.getAbsoluteValue(piece.getType(), piece.getColor() === 'white', x ,y);
         return this.turn==='white' ? 
-        piece.substring(0,5) === 'white' ? absoluteValue : -absoluteValue : 
-        piece.substring(0,5) === 'white' ? -absoluteValue : absoluteValue;
+        piece.getColor() === 'white' ? absoluteValue : -absoluteValue : 
+        piece.getColor() === 'white' ? -absoluteValue : absoluteValue;
     };
     
 }
