@@ -43,7 +43,7 @@ const GameWrapper = (props) =>{
     if(loading===true){
         return <div>Loading...</div>
     }
-    return <Game game={game} socket={socket} token={token}/>
+    return <Game game={game} socket={socket} token={token} history={history}/>
 }
 
 export default GameWrapper;

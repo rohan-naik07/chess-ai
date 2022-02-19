@@ -31,7 +31,7 @@ function getBoard(){
   return board;
 }
 
-const Game = ({game,socket,token})=>{
+const Game = ({game,socket,token,history})=>{
     const user_id = jwtDecode(token)._id;
     const initialTurn = user_id===game.participant1._id ? game.initialTurn : (
         game.initialTurn==='white' ? 'black' : 'white'
@@ -47,13 +47,13 @@ const Game = ({game,socket,token})=>{
     const [moved,setMoved] = React.useState(checkifMoved);
     const [gameOver,setGameOver] = React.useState(false);
     const [pawnPromotions,setPawnPromotions] = React.useState({});
-    const [isPlaying,setisPlaying] = React.useState('y');
     const [check,setCheck] = React.useState(null);
     const utils = new Utils();
 
     const quitGame = ()=>{
         // update game with moves and result
-        
+        socket.emit("abandon",{room : game._id});
+        history('/home');
     }
 
     const playMove = (flag,selectedLocation,id)=>{
@@ -72,6 +72,7 @@ const Game = ({game,socket,token})=>{
             setPositions({...positions});
             setMoved(moved);
         }
+        console.log(positions)
         return attacked;
     }
 
@@ -172,6 +173,10 @@ const Game = ({game,socket,token})=>{
             return;
         }
 
+        if(selectedLocation===null && initialTurn!==turn){
+            return;
+        }
+
         if(selectedLocation!==null){
             const type = positions[selectedLocation].substring(6);
             const newRow = Number(id.split('+')[0]);
@@ -181,6 +186,7 @@ const Game = ({game,socket,token})=>{
             if(positions[id]!==undefined && initialTurn===positions[id].substring(0,5)){
                 setSelectedLocation(id);
             } else {
+
                 if(type==='king' && Math.abs(newCol-col)>=2 && row===newRow){
                     if(moved[positions[selectedLocation]]===false)
                         checkCastling(id);
@@ -214,20 +220,20 @@ const Game = ({game,socket,token})=>{
                         }
                     }
                 }
+
                 let piece;
                 if(typeof(flag)==="string"){
                     piece = playPassantMove(flag,selectedLocation,id);
                 } else piece = playMove(flag,selectedLocation,id);
 
-                setisPlaying('a');
                 if(flag!==0){
-                    moves.push([selectedLocation,id,initialTurn,piece])
                     //emit event
                     socket.emit("move",{
                         move : [selectedLocation,id,initialTurn,piece],
                         flag : flag,
                         room : game._id
                     })
+                    moves.push([selectedLocation,id,initialTurn,piece])
                     setMoves(moves);
                     setTurn(turn==='white' ? 'black' : 'white');
                 }
@@ -289,18 +295,21 @@ const Game = ({game,socket,token})=>{
                     playMove(args.flag,args.move[0],args.move[1])
                     moves.push(args.move);
                     setMoves(moves);
-                    setTurn(turn==='white' ? 'black' : 'white');
+                    setTurn(initialTurn);
                 }
             })
             socket.on("disconnect", () =>console.log(socket.id));
             socket.on("undo",()=>undoHandler())
             socket.on("abandon",()=>quitGame())
         });
+
+        window.addEventListener('beforeunload',()=>quitGame())
         
         return ()=>{
             socket.off("move",()=>console.log("move listener removed"))
             socket.off("undo",()=>console.log("undo listener removed"))
             socket.off("abandon",()=>console.log("abandon listener removed"))
+            window.removeEventListener("beforeunload",null)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     },[])
@@ -404,6 +413,7 @@ const Game = ({game,socket,token})=>{
         </div>
         
     }
+
     const displayMessage = ()=>{
         if(gameOver===true){
             return (
@@ -419,17 +429,18 @@ const Game = ({game,socket,token})=>{
             <h4 style={{color : check}}>Check!!</h4>
         )
     }
+
     return (
     <div className="container">
         <div className="left-pane">
             <div style={styles.info}>
                 <h3>{opponent.userName}</h3>
-                { isPlaying!==null && isPlaying==='a' ? <h5>Playing...</h5> : null }
+                { turn!==game.initialTurn ? <h5>Playing...</h5> : null }
             </div>
             { getBoard().map((row,index)=>getRowRendering(row,index)) }
             <div style={styles.info}>
                 <h3>{player.userName}</h3>
-                { isPlaying!==null && isPlaying==='y' ? <h5>Playing...</h5>: null }
+                { turn===game.initialTurn ? <h5>Playing...</h5>: null }
             </div>
         </div>
         <div className="right-pane">
@@ -469,10 +480,7 @@ const Game = ({game,socket,token})=>{
             </div>
             <div className="actions">
                 <div style={styles.undo} onClick={()=>undoHandler()}>Undo</div>
-                <div style={styles.abandon} onClick={()=>{
-                    socket.emit("abandon",{room : game._id});
-                    quitGame();
-                }}>Abandon</div>
+                <div style={styles.abandon} onClick={()=>quitGame()}>Abandon</div>
             </div>
         </div>
     </div>
