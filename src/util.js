@@ -73,7 +73,7 @@ const checkforwardDiagonalOverlap = (row,col,newRow,newCol,positions)=>{
     if(row > newRow){
         temp_row-=1;
         temp_col-=1;
-        for(let i=row-col;i>newRow-newCol;i-=2){
+        for(let i=row-col-2;i>newRow-newCol;i-=2){
             if(positions[`${temp_row}+${temp_col}`]!==undefined){
                 return true;
             }
@@ -83,7 +83,7 @@ const checkforwardDiagonalOverlap = (row,col,newRow,newCol,positions)=>{
     } else {
         temp_row+=1;
         temp_col+=1;
-        for(let i=row-col;i<newRow-newCol;i+=2){
+        for(let i=row-col+2;i<newRow-newCol;i+=2){
             if(positions[`${temp_row}+${temp_col}`]!==undefined){
                 return true;
             }
@@ -128,7 +128,7 @@ export const isCheckmated = (turn,positions)=>{
     for(let i=0;i<64;i++){
         if(positions[squares[i]]!==undefined && positions[squares[i]].getColor()!==turn){
             for(let j=0;j<64;j++){
-                if(positions[squares[j]]!==undefined && positions[squares[j]].checkValidMove(squares[i],squares[j],positions,turn,false)!==0){
+                if(positions[squares[i]].checkValidMove(squares[j],squares[i],positions,turn)!==0){
                     let piece = positions[squares[i]]
                     delete positions[squares[i]]
                     positions[squares[j]] = piece;
@@ -145,11 +145,12 @@ export const isCheckmated = (turn,positions)=>{
 }
 
 class Piece {
-    constructor(identifier,image){
+    constructor(identifier,image,initialTurn){
         this.identifier = identifier;
         this.image = image
         this.color = identifier.substring(0,5);
         this.type = identifier.substring(6);
+        this.initialTurn = initialTurn;
         this.destroyed = false;
     }
 
@@ -163,17 +164,34 @@ class Piece {
 }
 
 class Pawn extends Piece{
-    constructor(identifier,image){
-        super(identifier,image);
+    constructor(identifier,image,initialTurn){
+        super(identifier,image,initialTurn);
         this.canbeAttackedpassant = false;
         this.passant_row = null;
         this.is_promoted = false;
         this.promotion = null;
     }
-
-    promote = (turn)=>{
-        this.promotion = new Queen(`${turn}1queen`,turn==='white' ? qlt : qdt);
-        this.is_promoted = true;
+    
+    promote = (turn,initialTurn,id)=>{
+        const newRow = Number(id.split('+')[0]);
+        if(initialTurn==='white'){
+            if(turn==='white' && newRow===0){
+                this.is_promoted = true;
+            }
+            if(turn==='black' && newRow===7){
+                this.is_promoted = true;
+            }
+        } else {
+            if(turn==='white' && newRow===7){
+                this.is_promoted = true;
+            }
+            if(turn==='black' && newRow===0){
+                this.is_promoted = true;
+            }
+        }
+        if(this.is_promoted===true){
+            this.promotion = new Queen(`${turn}1queen`,turn==='white' ? qlt : qdt);
+        } 
     }
 
     demote = ()=>{
@@ -185,9 +203,11 @@ class Pawn extends Piece{
         if(this.is_promoted===true){
             return this.promotion.checkValidMove(id,selectedLocation,positions,turn);
         }
+
         if(id===undefined || id===null){
             return;
         }
+
         if(positions[selectedLocation]===undefined){
             return 0;
         }
@@ -205,43 +225,65 @@ class Pawn extends Piece{
             this.canbeAttackedpassant = false
             this.passant_row = null;
         }
+
+        const plainMoves={}
+        const attackMoves={}
         
-        const plainMoves = [
-            row===1 || row===6 ? [row+2,col] : [row+10,col+10],
-            row===1 || row===6 ? [row-2,col] : [row+10,col+10],
-            [row+1,col],[row-1,col]
-        ]
-        const attackMoves = [
-            [row-1,col+1],[row+1,col-1],
-            [row-1,col-1],[row+1,col+1]
-        ]
+        if(this.initialTurn==='white'){
+            if(positions[selectedLocation].getColor() ==='white'){
+                plainMoves[`${row-1}+${col}`] = true;
+                attackMoves[`${row-1}+${col-1}`] = true;
+                attackMoves[`${row-1}+${col+1}`] = true;
+                if(row===6){
+                    plainMoves[`${row-2}+${col}`] = true;
+                }
+            }else{
+                plainMoves[`${row+1}+${col}`] = true;
+                attackMoves[`${row+1}+${col-1}`] = true;
+                attackMoves[`${row+1}+${col+1}`] = true;
+                if(row===1){
+                    plainMoves[`${row+2}+${col}`] = true;
+                }
+            }
+            
+        } else {
+            if(positions[selectedLocation].getColor()==='black'){
+                plainMoves[`${row-1}+${col}`] = true;
+                attackMoves[`${row+1}+${col}`] = true;
+                attackMoves[`${row+1}+${col}`] = true;
+                if(row===1){
+                    plainMoves[`${row-2}+${col}`] = true;
+                }
+            }else{
+                plainMoves[`${row+1}+${col}`] = true;
+                attackMoves[`${row+1}+${col}`] = true;
+                attackMoves[`${row+1}+${col}`] = true;
+                if(row===6){
+                    plainMoves[`${row+2}+${col}`] = true;
+                }
+            }
+        }
         
-        for(let i=0;i<attackMoves.length;i++){
-            let move = attackMoves[i];
-            if(move[0]===newRow && move[1]===newCol){
-                if(checkConstraints(move)){
-                    if(positions[id]!==undefined && positions[id].getColor()!==turn){
-                        return 2;
-                    } else {
-                        if(positions[`${row}+${col-1}`]!==undefined && positions[`${row}+${col-1}`].canbeAttackedpassant===true){
-                            positions[`${row}+${col-1}`].canbeAttackedpassant=false;
-                            return `${row}+${col-1}`;
-                        }
-                        if(positions[`${row}+${col+1}`]!==undefined && positions[`${row}+${col+1}`].canbeAttackedpassant===true){
-                            positions[`${row}+${col+1}`].canbeAttackedpassant=false;
-                            return `${row}+${col+1}`;
-                        }
+        if(attackMoves[`${newRow}+${newCol}`]===true){
+            if(checkConstraints([newRow,newCol])){
+                if(positions[id]!==undefined && positions[id].getColor()!==turn){
+                    return 2;
+                } else {
+                    if(positions[`${row}+${col-1}`]!==undefined && positions[`${row}+${col-1}`].canbeAttackedpassant===true){
+                        positions[`${row}+${col-1}`].canbeAttackedpassant=false;
+                        return `${row}+${col-1}`;
+                    }
+                    if(positions[`${row}+${col+1}`]!==undefined && positions[`${row}+${col+1}`].canbeAttackedpassant===true){
+                        positions[`${row}+${col+1}`].canbeAttackedpassant=false;
+                        return `${row}+${col+1}`;
                     }
                 }
             }
         }
 
-        for(let i=0;i<plainMoves.length;i++){
-            let move = plainMoves[i];
-            if(move[0]===newRow && move[1]===newCol){
-                if(checkConstraints(move) && positions[`${move[0]}+${move[1]}`]===undefined){
-                    return 1;
-                }
+        if(plainMoves[`${newRow}+${newCol}`]===true){
+            if(checkConstraints([newRow,newCol]) && positions[`${newRow}+${newCol}`]===undefined){
+                return 1;
             }
         }
         
@@ -251,8 +293,8 @@ class Pawn extends Piece{
 
 
 class Queen extends Piece{
-    constructor(identifier,image){
-        super(identifier,image);
+    constructor(identifier,image,initialTurn){
+        super(identifier,image,initialTurn);
     }
 
     checkValidMove = (id,selectedLocation,positions,turn)=>{
@@ -303,8 +345,8 @@ class Queen extends Piece{
 }
 
 class King extends Piece{
-    constructor(identifier,image){
-        super(identifier,image);
+    constructor(identifier,image,initialTurn){
+        super(identifier,image,initialTurn);
         this.moved = false;
     }
 
@@ -371,22 +413,25 @@ class King extends Piece{
         const newCol = Number(id.split('+')[1]);
         const row = Number(selectedLocation.split('+')[0]);
         const col = Number(selectedLocation.split('+')[1]);
-        
-        let square = [
-            [row+1,col],[row-1,col],[row,col+1],[row,col-1],
-            [row+1,col+1],[row+1,col-1],[row-1,col+1],[row-1,col-1]
-        ];
 
-        for(let i=0;i<square.length;i++){
-            let position = square[i];
-            if(newRow===position[0] && newCol===position[1]){
-                if( positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
-                    if(positions[id]!==undefined && positions[id].getColor()!==turn){
-                        return 2;
-                    } else {
-                        return 1;
-                    }
-                } 
+        let square={
+            [`${row+1}+${col}`] : true,
+            [`${row-1}+${col}`] : true,
+            [`${row}+${col+1}`] : true,
+            [`${row}+${col-1}`] : true,
+            [`${row+1}+${col+1}`] : true,
+            [`${row+1}+${col-1}`] : true,
+            [`${row-1}+${col+1}`] : true,
+            [`${row-1}+${col-1}`] : true,
+        }
+        
+        if(checkConstraints([newRow,newCol]) && square[`${newRow}+${newCol}`]===true){
+            if( positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
+                if(positions[id]!==undefined && positions[id].getColor()!==turn){
+                    return 2;
+                } else {
+                    return 1;
+                }
             }
         }
         return 0;
@@ -394,8 +439,8 @@ class King extends Piece{
 }
 
 class Knight extends Piece{
-    constructor(identifier,image){
-        super(identifier,image);
+    constructor(identifier,image,initialTurn){
+        super(identifier,image,initialTurn);
     }
     checkValidMove = (id,selectedLocation,positions,turn)=>{
         if(id===undefined || id===null){
@@ -409,22 +454,25 @@ class Knight extends Piece{
         const newCol = Number(id.split('+')[1]);
         const row = Number(selectedLocation.split('+')[0]);
         const col = Number(selectedLocation.split('+')[1]);
-        
-        const moves = [
-            [row+2,col+1],[row-2,col+1],[row+1,col+2],[row+1,col-2],
-            [row+2,col-1],[row-2,col-1],[row-1,col+2],[row-1,col-2]
-        ]
+    
+        let moves={
+            [`${row+2}+${col+1}`] : true,
+            [`${row-2}+${col+1}`] : true,
+            [`${row+1}+${col+2}`] : true,
+            [`${row+1}+${col-2}`] : true,
+            [`${row+2}+${col-1}`] : true,
+            [`${row-2}+${col-1}`] : true,
+            [`${row-1}+${col+2}`] : true,
+            [`${row-1}+${col-2}`] : true,
+        }
 
-        for(let i=0;i<moves.length;i++){
-            let position = moves[i];
-            if(newRow===position[0] && newCol===position[1]){
-                if( positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
-                    if(positions[id]!==undefined && positions[id].getColor()!==turn){
-                        return 2;
-                    } else {
-                        return 1;
-                    }
-                } 
+        if(checkConstraints([newRow,newCol]) && moves[`${newRow}+${newCol}`]===true){
+            if( positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
+                if(positions[id]!==undefined && positions[id].getColor()!==turn){
+                    return 2;
+                } else {
+                    return 1;
+                }
             }
         }
         return 0;
@@ -432,8 +480,8 @@ class Knight extends Piece{
 }
 
 class Rook extends Piece{
-    constructor(identifier,image){
-        super(identifier,image);
+    constructor(identifier,image,initialTurn){
+        super(identifier,image,initialTurn);
         this.moved = false;
     }
 
@@ -479,8 +527,8 @@ class Rook extends Piece{
 }
 
 class Bishop extends Piece{
-    constructor(identifier,image){
-        super(identifier,image);
+    constructor(identifier,image,initialTurn){
+        super(identifier,image,initialTurn);
     }
 
     checkValidMove = (id,selectedLocation,positions,turn)=>{

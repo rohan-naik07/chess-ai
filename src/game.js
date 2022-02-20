@@ -1,8 +1,5 @@
 import React from "react";
-import { 
-    initialPositionsWhite,
-    initialPositionsBlack
-} from "./initials";
+import { getInitialPositions} from "./initials";
 import MiniMax from "./minimax";
 import './App.css'
 import Timer from "./timer";
@@ -28,9 +25,7 @@ function getBoard(){
 }
 
 const Game = ({initialTurn,name,setDisplay})=>{
-    const [positions,setPositions] = React.useState(
-        initialTurn==='white' ?  {...initialPositionsWhite} : {...initialPositionsBlack}
-    );
+    const [positions,setPositions] = React.useState(getInitialPositions(initialTurn));
     const [turn,setTurn] = React.useState(initialTurn);
     const [selectedLocation,setSelectedLocation] = React.useState(null);
     const [moves,setMoves] = React.useState([]);
@@ -39,7 +34,7 @@ const Game = ({initialTurn,name,setDisplay})=>{
     let minimax = new MiniMax(initialTurn);
 
     const quitGame = ()=>{
-        setPositions(initialTurn==='white' ?  {...initialPositionsWhite} : {...initialPositionsBlack})
+        setPositions(getInitialPositions(initialTurn))
         setTurn(initialTurn);
         setSelectedLocation(null);
         setMoves([]);
@@ -120,35 +115,10 @@ const Game = ({initialTurn,name,setDisplay})=>{
                    return;
                 }
                 
-                let flag = positions[selectedLocation].checkValidMove(id,selectedLocation,positions,turn);
-                const newRow = Number(id.split('+')[0]);
+                let flag = positions[selectedLocation].checkValidMove(id,selectedLocation,positions,turn,initialTurn);
                 if(type==='pawn'){
-                    if(initialTurn==='white'){
-                        if(turn==='white' && newRow===0){
-                            if(flag!==0){
-                                positions[selectedLocation].promote(turn);
-                                return;
-                            }
-                        }
-                        if(turn==='black' && newRow===7){
-                            if(flag!==0){
-                                positions[selectedLocation].promote(turn);
-                                return;
-                            }
-                        }
-                    } else {
-                        if(turn==='white' && newRow===7){
-                            if(flag!==0){
-                                positions[selectedLocation].promote(turn);
-                                return;
-                            }
-                        }
-                        if(turn==='black' && newRow===0){
-                            if(flag!==0){
-                                positions[selectedLocation].promote(turn);
-                                return;
-                            }
-                        }
+                    if(flag!==0){
+                        positions[selectedLocation].promote(turn,initialTurn,id)
                     }
                 }
                 
@@ -159,24 +129,8 @@ const Game = ({initialTurn,name,setDisplay})=>{
                     piece = playMove(flag,selectedLocation,id);
                 }
 
-                let isCheck = isinCheck('white',{...positions});
-                let over;
-                if(isCheck===true){
-                    setCheck('black')
-                    over = isCheckmated('white',{...positions});
-                    if(over===true){
-                        setGameOver(over);
-                    } 
-                }
-                isCheck = isinCheck('black',{...positions});
-                if(isCheck===true){
-                    setCheck('white')
-                    over = isCheckmated('black',{...positions});
-                    if(over===true){
-                        setGameOver(over);
-                    } 
-                }
-
+                checkGameOver('white')
+                checkGameOver('black')
 
                 if(flag!==0){
                     moves.push([selectedLocation,id,initialTurn,piece])
@@ -202,6 +156,8 @@ const Game = ({initialTurn,name,setDisplay})=>{
                 let move = playAI(initialTurn);
                 let selectedLocation = move[0];
                 let id = move[1];
+                checkGameOver('white')
+                checkGameOver('black')
                 setTurn(initialTurn)
                 moves.push([selectedLocation,id,turn,move[2]])
                 setMoves(moves);
@@ -210,26 +166,23 @@ const Game = ({initialTurn,name,setDisplay})=>{
             window.alert(error)
             console.error(error)
         }
-
-        let isCheck = isinCheck('white',{...positions});
-        let over;
-        if(isCheck===true){
-            setCheck('black')
-            over = isCheckmated('white',{...positions});
-            if(over===true){
-                setGameOver(over);
-            } 
-        }
-        isCheck = isinCheck('black',{...positions});
-        if(isCheck===true){
-            setCheck('white')
-            over = isCheckmated('black',{...positions});
-            if(over===true){
-                setGameOver(over);
-            } 
-        }
+        
         // eslint-disable-next-line react-hooks/exhaustive-deps
     },[turn])
+
+    const checkGameOver = (turn)=>{
+        let isCheck = isinCheck(turn,{...positions});
+        let over;
+        if(isCheck===true){
+            setCheck(turn==='white' ? 'black' : 'white')
+            over = isCheckmated(turn,{...positions});
+            if(over===true){
+                setGameOver(over);
+            } 
+        }else{
+            setCheck(null)
+        }
+    }
 
     const undoHandler = ()=>{
         if(moves.length===0 || gameOver===true){
@@ -245,8 +198,8 @@ const Game = ({initialTurn,name,setDisplay})=>{
             positions[selectedLocation] = move[3];
             move[3].setDestroyed(false);
         }
-        if(move[3]!==null && move[3].getType()==='pawn'){
-            move[3].demote();
+        if(positions[id].getType()==='pawn'){
+            positions[id].demote();
         }
         moves.pop();
         setPositions({...positions});
@@ -276,7 +229,11 @@ const Game = ({initialTurn,name,setDisplay})=>{
                                 <img 
                                      className="square-image"
                                      alt={`${cell.row}+${cell.col}`} 
-                                     src={positions[`${cell.row}+${cell.col}`].getImage()}
+                                     src={
+                                        positions[`${cell.row}+${cell.col}`].getType()==='pawn' && 
+                                        positions[`${cell.row}+${cell.col}`].is_promoted===true  ?
+                                        positions[`${cell.row}+${cell.col}`].promotion.getImage() : positions[`${cell.row}+${cell.col}`].getImage()
+                                    }
                                 />
                             </div> : null
                         }
@@ -302,6 +259,7 @@ const Game = ({initialTurn,name,setDisplay})=>{
             <h4 style={{color : check}}>Check!!</h4>
         )
     }
+
     return (
     <div className="container">
         <div className="left-pane">
@@ -317,10 +275,7 @@ const Game = ({initialTurn,name,setDisplay})=>{
         </div>
         <div className="right-pane">
             <div style={styles.timer}>
-                <div>
-                    <Timer quitGame={quitGame}
-                        turn={turn}
-                /></div>
+                <div><Timer quitGame={quitGame} turn={turn}/></div>
                 <div style={{padding:10}}>{displayMessage()}</div>
             </div>
             <div style={styles.moveList}>
