@@ -49,6 +49,10 @@ const Game = ({initialTurn,name,setDisplay})=>{
                 positions[id].setDestroyed(true);
                 attacked = positions[id];
             }
+            if(typeof(flag)==='string'){
+                positions[flag].setDestroyed(true);
+                attacked = positions[flag];
+            }
             if(positions[selectedLocation].getType()==='king' || positions[selectedLocation].getType()==='rook'){
                 positions[selectedLocation].setMoved();
             }
@@ -60,17 +64,6 @@ const Game = ({initialTurn,name,setDisplay})=>{
         }
         return attacked;
     }
-
-    const playPassantMove = (flag,selectedLocation,id)=>{
-            positions[flag].setDestroyed(true);
-            positions[id] = positions[selectedLocation];
-            delete positions[selectedLocation];
-            setSelectedLocation(null);
-            setPositions({...positions});
-            setTurn(turn==='white' ? 'black' : 'white');
-            return positions[flag]
-    }
-
     
     const playAI = (turn)=>{
         let move = minimax.minimaxRoot(3,true, turn==='white' ? 'black' : 'white',{...positions});
@@ -98,6 +91,12 @@ const Game = ({initialTurn,name,setDisplay})=>{
         if(gameOver===true){
             return;
         }
+        if(isinCheck(turn,{...positions})){
+            setGameOver(true);
+            return;
+        } else {
+            setCheck(null);
+        } 
         if(selectedLocation!==null){
             const type = positions[selectedLocation].getType();
             if(positions[id]!==undefined && turn===positions[id].getColor()){
@@ -114,6 +113,10 @@ const Game = ({initialTurn,name,setDisplay})=>{
                     }
                    return;
                 }
+
+                if(type==='queen' && selectedLocation==='4+0'){
+                    console.log(positions[selectedLocation].checkValidMove('0+4',id,positions,turn))
+                }
                 
                 let flag = positions[selectedLocation].checkValidMove(id,selectedLocation,positions,turn,initialTurn);
                 if(type==='pawn'){
@@ -122,16 +125,8 @@ const Game = ({initialTurn,name,setDisplay})=>{
                     }
                 }
                 
-                let piece;
-                if(typeof(flag)==="string"){
-                    piece = playPassantMove(flag,selectedLocation,id);
-                } else {
-                    piece = playMove(flag,selectedLocation,id);
-                }
-
-                checkGameOver('white')
-                checkGameOver('black')
-
+                let piece = playMove(flag,selectedLocation,id);
+                checkGameOver(turn)
                 if(flag!==0){
                     moves.push([selectedLocation,id,initialTurn,piece])
                     setMoves(moves);
@@ -153,11 +148,16 @@ const Game = ({initialTurn,name,setDisplay})=>{
         
         try {
             if(turn!==initialTurn){
+                if(isinCheck(turn,{...positions})){
+                    setGameOver(true);
+                    return;
+                } else {
+                    setCheck(null);
+                } 
                 let move = playAI(initialTurn);
                 let selectedLocation = move[0];
                 let id = move[1];
-                checkGameOver('white')
-                checkGameOver('black')
+                checkGameOver(turn)
                 setTurn(initialTurn)
                 moves.push([selectedLocation,id,turn,move[2]])
                 setMoves(moves);
@@ -171,11 +171,10 @@ const Game = ({initialTurn,name,setDisplay})=>{
     },[turn])
 
     const checkGameOver = (turn)=>{
-        let isCheck = isinCheck(turn,{...positions});
-        let over;
+        const isCheck = isinCheck(turn,{...positions});
         if(isCheck===true){
             setCheck(turn==='white' ? 'black' : 'white')
-            over = isCheckmated(turn,{...positions});
+            const over = isCheckmated(turn,{...positions});
             if(over===true){
                 setGameOver(over);
             } 
@@ -188,7 +187,7 @@ const Game = ({initialTurn,name,setDisplay})=>{
         if(moves.length===0 || gameOver===true){
             return;
         }
-        
+        setSelectedLocation(null)
         let move = moves[moves.length-1];
         let selectedLocation = move[1];
         let id = move[0];

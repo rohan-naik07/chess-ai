@@ -72,23 +72,23 @@ const checkforwardDiagonalOverlap = (row,col,newRow,newCol,positions)=>{
     let temp_col = col;
     if(row > newRow){
         temp_row-=1;
-        temp_col-=1;
+        temp_col+=1;
         for(let i=row-col-2;i>newRow-newCol;i-=2){
             if(positions[`${temp_row}+${temp_col}`]!==undefined){
                 return true;
             }
             temp_row-=1;
-            temp_col-=1;
+            temp_col+=1;
         }
     } else {
         temp_row+=1;
-        temp_col+=1;
+        temp_col-=1;
         for(let i=row-col+2;i<newRow-newCol;i+=2){
             if(positions[`${temp_row}+${temp_col}`]!==undefined){
                 return true;
             }
             temp_row+=1;
-            temp_col+=1;
+            temp_col-=1;
         }
     }
     return false;
@@ -247,18 +247,18 @@ class Pawn extends Piece{
             }
             
         } else {
-            if(positions[selectedLocation].getColor()==='black'){
+            if(positions[selectedLocation].getColor() ==='black'){
                 plainMoves[`${row-1}+${col}`] = true;
-                attackMoves[`${row+1}+${col}`] = true;
-                attackMoves[`${row+1}+${col}`] = true;
-                if(row===1){
+                attackMoves[`${row-1}+${col-1}`] = true;
+                attackMoves[`${row-1}+${col+1}`] = true;
+                if(row===6){
                     plainMoves[`${row-2}+${col}`] = true;
                 }
             }else{
                 plainMoves[`${row+1}+${col}`] = true;
-                attackMoves[`${row+1}+${col}`] = true;
-                attackMoves[`${row+1}+${col}`] = true;
-                if(row===6){
+                attackMoves[`${row+1}+${col-1}`] = true;
+                attackMoves[`${row+1}+${col+1}`] = true;
+                if(row===1){
                     plainMoves[`${row+2}+${col}`] = true;
                 }
             }
