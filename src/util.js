@@ -293,10 +293,6 @@ class Pawn extends Piece{
 
 
 class Queen extends Piece{
-    constructor(identifier,image,initialTurn){
-        super(identifier,image,initialTurn);
-    }
-
     checkValidMove = (id,selectedLocation,positions,turn)=>{
         if(id===undefined || id===null){
             return;
@@ -439,9 +435,6 @@ class King extends Piece{
 }
 
 class Knight extends Piece{
-    constructor(identifier,image,initialTurn){
-        super(identifier,image,initialTurn);
-    }
     checkValidMove = (id,selectedLocation,positions,turn)=>{
         if(id===undefined || id===null){
             return;
@@ -527,10 +520,6 @@ class Rook extends Piece{
 }
 
 class Bishop extends Piece{
-    constructor(identifier,image,initialTurn){
-        super(identifier,image,initialTurn);
-    }
-
     checkValidMove = (id,selectedLocation,positions,turn)=>{
         if(id===undefined || id===null){
             return;
