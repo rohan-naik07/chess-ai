@@ -40,7 +40,24 @@
     // ...
     console.log('connected')
     socket.on("join-room",(args)=>socket.join(args.roomId))
-    socket.on("move",(args)=>socket.to(args.room).emit("move",args))
+    socket.on("move",(args)=>{
+      let move = args.move;
+      console.log(move)
+      let id  = move[1];
+      let selectedLocation = move[0];
+      let newRow = Number(id.split('+')[0]);
+      let newCol = Number(id.split('+')[1]);
+      let row = Number(selectedLocation.split('+')[0]);
+      let col = Number(selectedLocation.split('+')[1]);
+      if(row!==newRow){
+        row = Math.abs(7-row);
+        newRow = Math.abs(7-newRow);
+      }
+      socket.to(args.room).emit("move",{
+        move : [`${row}+${col}`,`${newRow}+${newCol}`,move[2],move[3]],
+        flag : args.flag
+      })
+    })
     socket.on("undo",(args)=>socket.to(args.room).emit("undo"))
     socket.on("abandon",(args)=>socket.to(args.room).emit("abandon"))
   });
