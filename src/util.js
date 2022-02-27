@@ -99,12 +99,13 @@ export const isinCheck = (turn,positions)=>{
     let kingPosition = null;
     let flag = false;
     Object.keys(positions).forEach(position=>{
-        if(positions[position].getColor()!==turn && positions[position].getType()==='king'){
+        if(positions[position]!==undefined && positions[position].getColor()!==turn && positions[position].getType()==='king'){
             kingPosition = position;
         }
     })
     Object.keys(positions).forEach(position=>{
         if(
+            positions[position]!==undefined &&
             positions[position].getColor()===turn && 
             positions[position].checkValidMove(kingPosition,position,positions,turn)>0
         ){
@@ -151,12 +152,10 @@ class Piece {
         this.color = identifier.substring(0,5);
         this.type = identifier.substring(6);
         this.initialTurn = initialTurn;
-        this.destroyed = false;
     }
 
     setImage = (image)=>this.image=image;
     setId = (identifier)=>this.identifier = identifier;
-    setDestroyed = (destroyed) => this.destroyed = destroyed;
     getImage = ()=>{return this.image}
     getId = ()=>{return this.identifier}
     getColor = ()=>{return this.color}
@@ -267,7 +266,7 @@ class Pawn extends Piece{
         if(attackMoves[`${newRow}+${newCol}`]===true){
             if(checkConstraints([newRow,newCol])){
                 if(positions[id]!==undefined && positions[id].getColor()!==turn){
-                    return 2;
+                    return 1;
                 } else {
                     if(positions[`${row}+${col-1}`]!==undefined && positions[`${row}+${col-1}`].canbeAttackedpassant===true){
                         positions[`${row}+${col-1}`].canbeAttackedpassant=false;
@@ -329,11 +328,7 @@ class Queen extends Piece{
                 return 0;
             }
             if(positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
-                if(positions[id]!==undefined && positions[id].getColor()!==turn){
-                    return 2;
-                } else {
-                    return 1;
-                }
+                return 1;
             }   
         }
         return 0;
@@ -423,11 +418,7 @@ class King extends Piece{
         
         if(checkConstraints([newRow,newCol]) && square[`${newRow}+${newCol}`]===true){
             if( positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
-                if(positions[id]!==undefined && positions[id].getColor()!==turn){
-                    return 2;
-                } else {
-                    return 1;
-                }
+                return 1;
             }
         }
         return 0;
@@ -461,11 +452,7 @@ class Knight extends Piece{
 
         if(checkConstraints([newRow,newCol]) && moves[`${newRow}+${newCol}`]===true){
             if( positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
-                if(positions[id]!==undefined && positions[id].getColor()!==turn){
-                    return 2;
-                } else {
-                    return 1;
-                }
+                return 1;
             }
         }
         return 0;
@@ -508,11 +495,7 @@ class Rook extends Piece{
                 return 0;
             }
             if(positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
-                if(positions[id]!==undefined && positions[id].getColor()!==turn){
-                    return 2;
-                } else {
-                    return 1;
-                }
+                return 1;
             }   
         }
         return 0;
@@ -548,11 +531,7 @@ class Bishop extends Piece{
                 return 0;
             }
             if(positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
-                if(positions[id]!==undefined && positions[id].getColor()!==turn){
-                    return 2;
-                } else {
-                    return 1;
-                }
+                return 1;
             }   
         }
         return 0;

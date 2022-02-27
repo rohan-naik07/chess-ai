@@ -1,11 +1,13 @@
 import React from "react";
 import { 
+    getCompressedObject,
     getInitialPositions
 } from "./initials";
 import {isinCheck,isCheckmated} from './util';
 import './App.css'
 import Timer from "./timer";
 import jwtDecode from "jwt-decode";
+import { getFromServer, GET_AI_URL } from "./tools/urls";
 
 function getBoard(){
   const board = [];
@@ -26,7 +28,7 @@ function getBoard(){
   return board;
 }
 
-const Game = ({game,socket,token,history})=>{
+const Game = ({game,socket,token,history,gameWithAI})=>{
     const user_id = jwtDecode(token)._id;
     const initialTurn = user_id===game.participant1._id ? game.initialTurn : (
         game.initialTurn==='white' ? 'black' : 'white'
@@ -41,75 +43,30 @@ const Game = ({game,socket,token,history})=>{
 
     const quitGame = ()=>{
         // update game with moves and result
-        socket.emit("abandon",{room : game._id});
+        if(gameWithAI===false)
+            socket.emit("abandon",{room : game._id});
         history('/home');
     }
 
-    const changePositions = (selectedLocation,id)=>{
-        let newRow = Number(id.split('+')[0]);
-        let newCol = Number(id.split('+')[1]);
-        let row = Number(selectedLocation.split('+')[0]);
-        let col = Number(selectedLocation.split('+')[1]);
-        if(row!==newRow){
-          row = Math.abs(7-row);
-          newRow = Math.abs(7-newRow);
-        }
-        if(col===newCol){
-          col = Math.abs(7-col);
-          newCol = Math.abs(7-newCol);
-        }
-        return {
-            selectedLocation : `${row}+${col}`,
-            id : `${newRow}+${newCol}`
-        }
-    }
-
-    const playMove = (flag,selectedLocation,id)=>{
-        let attacked=null;
+    const playMove = (flag,selectedLocation,id,piece)=>{
         if(flag!==0){
-            if(flag===2){
-                positions[id].setDestroyed(true);
-                attacked = positions[id].getId();
-            }
-            if(typeof(flag)==='string'){
-                positions[flag].setDestroyed(true);
-                attacked = positions[flag].getId();
-            }
-            if(positions[selectedLocation].getType()==='king' || positions[selectedLocation].getType()==='rook'){
-                positions[selectedLocation].setMoved();
-            }
-            positions[id] = positions[selectedLocation];
-            delete positions[selectedLocation];
-            setSelectedLocation(null);
-            setPositions({...positions});
+            setSelectedLocation(null);                
+            moves.push([selectedLocation,id,turn,piece])
+            setMoves(moves);
+            setPositions(prevPositions=>
+                {
+                   let piece = prevPositions[selectedLocation]
+                   return {
+                    ...prevPositions,
+                    [selectedLocation] : undefined,
+                    [id] : piece
+                   }
+                }
+            );
         }
-        return attacked;
     }
 
     
-
-    const playAI = (turn)=>{
-        let move = []//minimax.minimaxRoot(3,true, turn==='white' ? 'black' : 'white',{...positions});
-        let selectedLocation = move[0];
-        let id = move[1];
-
-        if(positions[id]!==undefined){
-            positions[id].setDestroyed(true);
-        }
-
-        if(positions[id]!==undefined){
-            move.push(positions[id])
-        } else {
-            move.push(null);
-        }
-       
-        positions[id] = positions[selectedLocation];
-        delete positions[selectedLocation];
-        setSelectedLocation(null);
-        setPositions({...positions});
-        return move;
-    }
-
     const onClickHandler = (id)=>{
         if(gameOver===true){
             return;
@@ -130,36 +87,40 @@ const Game = ({game,socket,token,history})=>{
             } else {
                 if(type==='king'){
                     if(positions[selectedLocation].moved===false){
-                        let castling_positions = positions[selectedLocation].checkCastling(id,selectedLocation,positions);
+                        let castling_positions = positions[selectedLocation].checkCastling(id,selectedLocation,{...positions});
                         if(castling_positions.rookPos===null || castling_positions.newRookPos===null){
                             //play two turns
-                            playMove(1,selectedLocation,id);
-                            playMove(1,castling_positions.newRookPos,castling_positions.rookPos);
+                            playMove(1,selectedLocation,id,null);
+                            playMove(1,castling_positions.newRookPos,castling_positions.rookPos,null);
                         }
                     }
                    return;
                 }
 
-                let flag = positions[selectedLocation].checkValidMove(id,selectedLocation,positions,turn,initialTurn);
+                let flag = positions[selectedLocation].checkValidMove(id,selectedLocation,{...positions},turn,initialTurn);
+                if(flag!==0){
+                    if(type==='king' || type==='rook'){
+                        positions[selectedLocation].setMoved();
+                    }
+                }
+
                 if(type==='pawn'){
                     if(flag!==0){
                         positions[selectedLocation].promote(turn,initialTurn,id)
                     }
                 }
                 
-                let piece = playMove(flag,selectedLocation,id);
+                let piece = positions[id]===undefined ? null : positions[id];
+                playMove(flag,selectedLocation,id,piece===null ? piece : piece.getId());
+                setTurn(initialTurn==='white' ? 'black' : 'white');
                 checkGameOver(turn)
-                if(flag!==0){
+                if(flag!==0 && gameWithAI===false){
                     socket.emit("move",{
-                        move : [selectedLocation,id,initialTurn,piece],
+                        move : [selectedLocation,id,initialTurn,piece===null ? piece : piece.getId()],
                         flag : flag,
                         room : game._id
                     })
-                    setTurn(initialTurn==='white' ? 'black' : 'white');                
-                    moves.push([selectedLocation,id,initialTurn,piece])
-                    setMoves(moves);
                 }
-
             }
         } else {
             if(positions[id]!==undefined && turn===positions[id].getColor()){
@@ -168,9 +129,7 @@ const Game = ({game,socket,token,history})=>{
         }
     }  
 
-    
-    
-    /*React.useEffect(()=>{
+    const getFromAI = ()=>{
         if(gameOver===true){
             return;
         }
@@ -183,13 +142,18 @@ const Game = ({game,socket,token,history})=>{
                 } else {
                     setCheck(null);
                 } 
-                let move = playAI(initialTurn);
-                let selectedLocation = move[0];
-                let id = move[1];
-                checkGameOver(turn)
-                setTurn(initialTurn)
-                moves.push([selectedLocation,id,turn,move[2]])
-                setMoves(moves);
+                getFromServer(GET_AI_URL,
+                {
+                    positions : getCompressedObject({...positions}),
+                    turn : turn
+                }
+                ,'GET',token)
+                .then(response=>{
+                    let move = response.data.message;
+                    playMove(1,move.selectedLocation,move.id,move.piece);
+                    setTurn(initialTurn);
+                    checkGameOver(turn)
+                })
             }
         } catch (error) {
             window.alert(error)
@@ -197,50 +161,17 @@ const Game = ({game,socket,token,history})=>{
         }
         
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    },[turn])*/
-
-    const checkGameOver = (turn)=>{
-        const isCheck = isinCheck(turn,{...positions});
-        if(isCheck===true){
-            setCheck(turn==='white' ? 'black' : 'white')
-            const over = isCheckmated(turn,{...positions});
-            if(over===true){
-                setGameOver(over);
-            } 
-        }else{
-            setCheck(null)
-        }
     }
 
-    React.useEffect(()=>{
+    const registerSocketListeners = ()=>{
         socket.on("connect", () => {
             console.log(socket.id); // x8WIv7-mJelg7on_ALbx
             socket.emit("join-room",{roomId : game._id});
             socket.on("move",function(args){
-                //opponent played a move
-                console.log(args)
                 if(initialTurn!==args.move[2]){
                     let selectedLocation = args.move[0];
                     let id = args.move[1]
-                    let attacked;
-                    let flag = args.flag;
-                    if(flag===2){
-                        positions[id].setDestroyed(true);
-                        attacked = positions[id].getId();
-                    }
-                    if(typeof(flag)==='string'){
-                        positions[flag].setDestroyed(true);
-                        attacked = positions[flag].getId();
-                    }
-                    if(positions[selectedLocation].getType()==='king' || positions[selectedLocation].getType()==='rook'){
-                        positions[selectedLocation].setMoved();
-                    }
-                    positions[id] = positions[selectedLocation];
-                    delete positions[selectedLocation];
-                    setSelectedLocation(null);
-                    setPositions({...positions});
-                    moves.push(args.move);
-                    setMoves(moves);
+                    playMove(args.flag,selectedLocation,id,args.move[3]);
                     setTurn(initialTurn);
                 }
             })
@@ -258,8 +189,24 @@ const Game = ({game,socket,token,history})=>{
             window.removeEventListener("beforeunload",null)
         }
         // eslint-disable-next-line react-hooks/exhaustive-deps
-    },[])
+    }
+   
+    React.useEffect(gameWithAI===false ? registerSocketListeners:getFromAI,gameWithAI===false ? []: [turn])
+    
+    const checkGameOver = (turn)=>{
+        const isCheck = isinCheck(turn,{...positions});
+        if(isCheck===true){
+            setCheck(turn==='white' ? 'black' : 'white')
+            const over = isCheckmated(turn,{...positions});
+            if(over===true){
+                setGameOver(over);
+            } 
+        }else{
+            setCheck(null)
+        }
+    }
 
+   
     const undoHandler = ()=>{
         if(moves.length===0 || gameOver===true){
             return;
@@ -268,20 +215,22 @@ const Game = ({game,socket,token,history})=>{
         let move = moves[moves.length-1];
         let selectedLocation = move[1];
         let id = move[0];
-        positions[id] = positions[selectedLocation];
-        delete positions[selectedLocation];
-        if(move[3]!==null){
-            positions[selectedLocation] = initialPositions.mappedObject[move[3]];
-            positions[selectedLocation].setDestroyed(false);
-        }
-        if(positions[id].getType()==='pawn'){
-            positions[id].demote();
-        }
+        setPositions(prevPositions=>
+            {
+               let piece = prevPositions[selectedLocation]
+               if(piece.getType()==='pawn'){
+                    piece.demote();
+                }
+               return {
+                ...prevPositions,
+                [id] : piece,
+                [selectedLocation] : move[3]!==null ?  initialPositions.mappedObject[move[3]] : undefined
+               }
+            }
+        );
         moves.pop();
-        setPositions({...positions});
         setMoves(moves);
         setTurn(initialTurn);
-        socket.emit("undo",{room : game._id});
     }
 
     const getRowRendering = (row,index)=>{
@@ -300,8 +249,7 @@ const Game = ({game,socket,token,history})=>{
                             }
                         }}>
                         {
-                            positions[`${cell.row}+${cell.col}`]!==undefined && 
-                            positions[`${cell.row}+${cell.col}`].destroyed===false ?
+                            positions[`${cell.row}+${cell.col}`]!==undefined  ?
                             <div id={`${cell.row}+${cell.col}`} style={{textAlign : 'center'}}>
                                 <img 
                                      className="square-image"
@@ -391,7 +339,8 @@ const Game = ({game,socket,token,history})=>{
             </div>
             <div className="actions">
                 <div style={styles.undo} onClick={()=>{
-                    undoHandler();
+                    undoHandler()
+                    socket.emit("undo",{room : game._id});
                 }}>Undo</div>
                 <div style={styles.abandon} onClick={quitGame}>Abandon</div>
             </div>

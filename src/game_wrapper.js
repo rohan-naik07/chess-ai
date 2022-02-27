@@ -11,6 +11,7 @@ const GameWrapper = (props) =>{
     const history = useNavigate();
     const [game,setGame] = React.useState({});
     const [loading,setLoading] = React.useState(true);
+    const [gameWithAI,setgameWithAI] = React.useState(false);
 
     React.useEffect(()=>{
         if(token==null){
@@ -20,11 +21,15 @@ const GameWrapper = (props) =>{
         getFromServer(GET_GAME_URL+gameId,null,'GET',token)
         .then(response=>{
             const user_id = jwtDecode(token)._id
+            console.log(response.data.message)
             if(
                 user_id===response.data.message.participant1._id ||
                 user_id===response.data.message.participant2._id
             ){
                 setGame({...response.data.message})
+                if(response.data.message.participant2.userName==='AI'){
+                    setgameWithAI(true);
+                }
             } else{
                 history('/home');
             }
@@ -33,6 +38,7 @@ const GameWrapper = (props) =>{
         .catch(error=>{
             setLoading(false)
             window.alert(error)
+            console.log(error)
             history('/home');
         })
         return ()=>{
@@ -43,7 +49,7 @@ const GameWrapper = (props) =>{
     if(loading===true){
         return <div>Loading...</div>
     }
-    return <Game game={game} socket={socket} token={token} history={history}/>
+    return <Game game={game} socket={socket} token={token} history={history} gameWithAI={gameWithAI}/>
 }
 
 export default GameWrapper;

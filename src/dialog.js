@@ -1,6 +1,5 @@
 import React from 'react';
 import { getFromServer,GET_GAME_URL,GET_USERS_URL } from "./tools/urls";
-import jwt_decode from "jwt-decode";
 
 const styles = {
     root : {
@@ -69,6 +68,17 @@ const styles = {
         justifyContent : 'space-between',
         marginTop : 10
     },
+    AIlistItem : {
+        display : 'flex',
+        alignItems : 'center',
+        borderRadius : 10,
+        backgroundColor : 'brown',
+        textAlign : 'center',
+        padding:5,
+        justifyContent : 'space-between',
+        marginTop : 10,
+        color : 'white'
+    },
     button : {
         borderRadius : 10,
         backgroundColor : 'yellow',
@@ -88,10 +98,8 @@ const Dialog = props =>{
     const [turn,setTurn] = React.useState(null);
 
     React.useEffect(()=>{
-        console.log(showDialog)
         if(showDialog===true){
             getFromServer(GET_USERS_URL,null,'GET',token).then(response=>{
-                console.log(response)
                 if(response.status!==200){
                     window.alert(response.data.message)
                 }
@@ -110,7 +118,7 @@ const Dialog = props =>{
             return;
         }
         const game = {
-            "participant2" : user._id,
+            "participant2" : user.userName==='AI' ? null : user._id ,
             "initialTurn" : turn,
         }
         try {
@@ -178,7 +186,7 @@ const Dialog = props =>{
                 </div>
                 { user===null ? <div style={styles.list}>{
                     onlineUsers.map(users=>
-                        <div style={styles.listItem} key={users._id}>
+                        <div style={users.userName==='AI' ? styles.AIlistItem : styles.listItem} key={users._id}>
                             <h4>{users.userName}</h4>
                             <div><button style={styles.refresh} onClick={()=>setUser(users)}>Select</button></div>
                         </div>
@@ -231,5 +239,5 @@ const Dialog = props =>{
         </div>
     )
 }
-//http://localhost:3000/game/620647edc56dfcf217243051
+
 export default Dialog;

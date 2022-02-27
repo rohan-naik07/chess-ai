@@ -22,6 +22,22 @@ const getMappedObject = (object)=>{
     return mappedObject;
 }
 
+export const getCompressedObject = (object)=>{
+    let compressedObject = {}
+    Object.keys(object).forEach(
+        key=>{
+            if(object[key]!==undefined){
+                compressedObject[key] = {
+                    id : object[key].getId(),
+                    color : object[key].getColor(),
+                    type : object[key].getType()
+                }
+            }
+        }
+    )
+    return compressedObject;
+}
+
 export const getInitialPositions = (initialTurn)=>{
     const initialPositionsWhite = {
         '0+0' : new Rook('black0rook',rdt,initialTurn),

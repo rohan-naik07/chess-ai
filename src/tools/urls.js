@@ -7,14 +7,7 @@ export const GET_USERS_URL = `${BASE_URL}/users/`
 export const GET_GAME_URL = `${BASE_URL}/game/`
 export const GET_AI_URL = `${BASE_URL}/game/ai`
 export const GAME_BASE_URL = `${BASE_URL}/game/user/`
-const getHeader = (token)=>{
-    return token ? {
-        "Content-Type": "application/json",
-        authorization : "Bearer " + token
-    } : {
-        "Content-Type": "application/json",
-    }
-}
+
 export const getFromServer = async (
     url,
     body,

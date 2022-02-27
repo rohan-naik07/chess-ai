@@ -90,8 +90,7 @@ const Home = (props)=>{
                     {
                         showDialog===false ? 
                         <React.Fragment>
-                            <div><button style={styles.button} onClick={()=>setShowDialog(true)}>Play with Friend</button></div>
-                            <div><button style={styles.button}>Play with AI</button></div>
+                            <div><button style={styles.button} onClick={()=>setShowDialog(true)}>Play!</button></div>
                         </React.Fragment> : 
                         <Dialog setShowDialog={setShowDialog} showDialog={showDialog}/>
                     }

@@ -1,253 +1,273 @@
-class Utils {
+const checkConstraints = position=>(
+    position[0] >= 0 && position[0]<8 &&
+    position[1] >= 0 && position[1]<8 
+)
 
-    static canbeAttackedpassant = {};
-
-    checkConstraints = position=>(
-            position[0] >= 0 && position[0]<8 &&
-            position[1] >= 0 && position[1]<8 
-        )
-
-    checkOverlap = (id,selectedLocation,positions)=>{
-        const nrow = Number(id.split('+')[0]);
-        const ncol = Number(id.split('+')[1]);
-        const crow = Number(selectedLocation.split('+')[0]);
-        const ccol = Number(selectedLocation.split('+')[1]);
-
-        let rowOverlap=false;
-        let colOverlap=false;
-        let forwardDiagonalOverlap = false;
-        let backwardDiagonalOverlap = false;
-
-        Object.keys(positions).forEach(
-            function(position){
-                const row = Number(position.split('+')[0]);
-                const col = Number(position.split('+')[1]);
-                if(nrow===row){ // column should be same for row overlap
-                    if(
-                        (ncol > ccol && col > ccol && ncol > col) ||
-                        (ncol < ccol && col < ccol && ncol < col)
-                    ){
-                        rowOverlap = true;
-                        
-                    }
-                }
-                if(ncol===col){
-                    if(
-                        (nrow < crow && row < crow && nrow < row) ||
-                        (nrow > crow && row > crow && nrow > row)
-                    ){
-                        colOverlap = true;
-                    } 
-                }
-                if(
-                    (nrow > crow && row > crow && nrow>row) || 
-                    (nrow < crow && row < crow && nrow < row)
-                ){
-                    if(nrow + ncol === row + col){
-                        forwardDiagonalOverlap = true;
-                    }
-                    if(nrow - ncol +7 === row - col+7){
-                        backwardDiagonalOverlap = true;
-                    }
-                } 
+const checkRowOverlap = (common_row,col,newCol,positions)=>{
+    if(col < newCol){
+        for(let i=col+1;i<newCol;i++){
+            if(positions[`${common_row}+${i}`]!==undefined){
+                return true;
             }
-        )
-        return [rowOverlap,colOverlap,forwardDiagonalOverlap,backwardDiagonalOverlap];
+        }
+    } else {
+        for(let i=col-1;i>newCol;i--){
+            if(positions[`${common_row}+${i}`]!==undefined){
+                return true;
+            }
+        }
     }
+    return false;
+}
 
-    checkValidMove = (id,selectedLocation,positions,turn,checkPassant)=>{
-        if(id===undefined || id===null){
-            return;
+const checkColOverlap = (common_col,row,newRow,positions)=>{
+    if(row < newRow){
+        for(let i=row+1;i<newRow;i++){
+            if(positions[`${i}+${common_col}`]!==undefined){
+                return true;
+            }
         }
-        if(positions[selectedLocation]===undefined){
-            return 0;
+    } else {
+        for(let i=row-1;i>newRow;i--){
+            if(positions[`${i}+${common_col}`]!==undefined){
+                return true;
+            }
         }
-        const type = positions[selectedLocation].substring(6);
-        const newRow = Number(id.split('+')[0]);
-        const newCol = Number(id.split('+')[1]);
-        const row = Number(selectedLocation.split('+')[0]);
-        const col = Number(selectedLocation.split('+')[1]);
-        let flag=0;
-        switch(type){
-            case 'king':
-                let square = [
-                    [row+1,col],[row-1,col],[row,col+1],[row,col-1],
-                    [row+1,col+1],[row+1,col-1],[row-1,col+1],[row-1,col-1]
-                ];
-                square.forEach(position=>{
-                    if(this.checkConstraints(position)){
-                        if(newRow===position[0] && newCol===position[1]){
-                            if(
-                                positions[id]===undefined || 
-                                ( positions[id]!==undefined && positions[id].substring(0,5)!==turn )
-                            ){
-                                if(positions[id]!==undefined && positions[id].substring(0,5)!==turn){
-                                flag = 2;
-                                } else flag=1;
-                                return;
-                            } 
-                        }
+    }
+    return false;
+}
+
+const checkbackwardDiagonalOverlap = (row,col,newRow,newCol,positions)=>{
+    let temp_row = row;
+    let temp_col = col;
+    if(row > newRow){
+        temp_row-=1;
+        temp_col-=1;
+        for(let i=row+col-2;i>newRow+newCol;i-=2){
+            if(positions[`${temp_row}+${temp_col}`]!==undefined){
+                return true;
+            }
+            temp_row-=1;
+            temp_col-=1;
+        }
+    } else {
+        temp_row+=1;
+        temp_col+=1;
+        for(let i=row+col+2;i<newRow+newCol;i+=2){
+            if(positions[`${temp_row}+${temp_col}`]!==undefined){
+                return true;
+            }
+            temp_row+=1;
+            temp_col+=1;
+        }
+    }
+    return false;
+}
+
+const checkforwardDiagonalOverlap = (row,col,newRow,newCol,positions)=>{
+    let temp_row = row;
+    let temp_col = col;
+    if(row > newRow){
+        temp_row-=1;
+        temp_col+=1;
+        for(let i=row-col-2;i>newRow-newCol;i-=2){
+            if(positions[`${temp_row}+${temp_col}`]!==undefined){
+                return true;
+            }
+            temp_row-=1;
+            temp_col+=1;
+        }
+    } else {
+        temp_row+=1;
+        temp_col-=1;
+        for(let i=row-col+2;i<newRow-newCol;i+=2){
+            if(positions[`${temp_row}+${temp_col}`]!==undefined){
+                return true;
+            }
+            temp_row+=1;
+            temp_col-=1;
+        }
+    }
+    return false;
+}
+
+const checkValidMove = (id,selectedLocation,positions,turn,initialTurn)=>{
+    if(id===undefined || id===null){
+        return;
+    }
+    if(positions[selectedLocation]===undefined){
+        return 0;
+    }
+    
+    const newRow = Number(id.split('+')[0]);
+    const newCol = Number(id.split('+')[1]);
+    const row = Number(selectedLocation.split('+')[0]);
+    const col = Number(selectedLocation.split('+')[1]);
+    
+    switch(positions[selectedLocation].type){
+        case 'pawn':
+            const plainMoves={}
+            const attackMoves={}
+            
+            if(initialTurn==='white'){
+                if(positions[selectedLocation].color ==='white'){
+                    plainMoves[`${row-1}+${col}`] = true;
+                    attackMoves[`${row-1}+${col-1}`] = true;
+                    attackMoves[`${row-1}+${col+1}`] = true;
+                    if(row===6){
+                        plainMoves[`${row-2}+${col}`] = true;
                     }
-                })
-                break;
-            case 'queen':
-                const overlapping = this.checkOverlap(id,selectedLocation,positions);
-                if(
-                    this.checkConstraints([newRow,newCol]) &&
-                    ((newRow===row && newCol!==col && overlapping[0]===false) ||
-                    (newRow!==row && newCol===col && overlapping[1]===false) ||
-                    (newRow + newCol === row + col && overlapping[2]===false) ||
-                    (newRow - newCol + 7 === row - col + 7 && overlapping[3]===false))
-                ){
-                    if(positions[id]===undefined ||
-                    (positions[id]!==undefined && positions[id].substring(0,5)!==turn)){
-                        if(positions[id]!==undefined && positions[id].substring(0,5)!==turn){
-                            flag=2;
-                        } else flag=1;
-                    }   
-                }
-                break;
-            case 'bishop':
-                if(
-                    (newRow + newCol === row + col) ||
-                    (newRow - newCol + 7 === row - col + 7)
-                ){
-                    if(this.checkConstraints([newRow,newCol])){
-                        const overlapping = this.checkOverlap(id,selectedLocation,positions);
-                        if(newRow + newCol === row + col && overlapping[2]===true ){
-                            flag=0;
-                            return flag;
-                        }
-                        if(newRow - newCol + 7 === row - col + 7 && overlapping[3]===true){
-                            flag=0;
-                            return flag;
-                        }
-                        if(
-                            positions[`${newRow}+${newCol}`]===undefined || 
-                            ( positions[id]!==undefined && positions[id].substring(0,5)!==turn )
-                        ){
-                            if(positions[id]!==undefined && positions[id].substring(0,5)!==turn){
-                                flag=2;
-                            } else flag=1;
-                        } 
-                    }
-                }
-                break;
-            case 'knight':
-                const moves = [
-                    [row+2,col+1],[row-2,col+1],[row+1,col+2],[row+1,col-2],
-                    [row+2,col-1],[row-2,col-1],[row-1,col+2],[row-1,col-2]
-                ]
-                moves.forEach(position=>{
-                    if(this.checkConstraints(position)){
-                        if(newRow===position[0] && newCol===position[1]){
-                            if(
-                                positions[id]===undefined ||
-                                (positions[id]!==undefined && positions[id].substring(0,5)!==turn)
-                            ){
-                                if(positions[id]!==undefined && positions[id].substring(0,5)!==turn){
-                                flag=2;
-                                }
-                            else flag =1;
-                                return;
-                            } 
-                        }
-                    }
-                })
-                break;
-            case 'rook':
-                if(
-                    (newRow===row && newCol!==col) ||
-                    (newRow!==row && newCol===col) 
-                ){
-                    if(this.checkConstraints([newRow,newCol])){
-                        const overlapping = this.checkOverlap(id,selectedLocation,positions);
-                        if(overlapping[0]===true || overlapping[1]===true){
-                            flag=0;
-                            return flag;
-                        }
-                        if(
-                            positions[`${newRow}+${newCol}`]===undefined ||
-                            (positions[id]!==undefined &&
-                            positions[id].substring(0,5)!==turn)
-                        ){
-                            if(positions[id]!==undefined && positions[id].substring(0,5)!==turn){
-                                flag=2;
-                            }
-                            flag=1;
-                        } 
+                }else{
+                    plainMoves[`${row+1}+${col}`] = true;
+                    attackMoves[`${row+1}+${col-1}`] = true;
+                    attackMoves[`${row+1}+${col+1}`] = true;
+                    if(row===1){
+                        plainMoves[`${row+2}+${col}`] = true;
                     }
                 }
-                break;
-            case 'pawn':
-                if(checkPassant===true){
-                    if(col===newCol && Math.abs(row-newRow)===2){
-                        // mark pawn eligible for passant
-                        Utils.canbeAttackedpassant[positions[selectedLocation]] = newRow;
-                    } else {
-                        delete Utils.canbeAttackedpassant[positions[selectedLocation]];
-                    }
-                }
-                const plainMoves = [
-                    row===1 || row===6 ? [row+2,col] : [row+10,col+10],
-                    row===1 || row===6 ? [row-2,col] : [row+10,col+10],
-                    [row+1,col],[row-1,col]
-                ]
-                const attackMoves = [
-                    [row-1,col+1],[row+1,col-1],
-                    [row-1,col-1],[row+1,col+1]
-                ]
                 
-                let done=false;
-                attackMoves.forEach(move=>{
-                    if(move[0]===newRow && move[1]===newCol){
-                        if(this.checkConstraints(move)){
-                            if(positions[id]!==undefined && positions[id].substring(0,5)!==turn){
-                                flag=2;
-                                done = true;
-                                return;
-                            } else {
-                                if(checkPassant===true && Utils.canbeAttackedpassant[positions[`${row}+${col-1}`]]!==undefined){
-                                    flag = `${row}+${col-1}`;
-                                    done = true;
-                                    delete Utils.canbeAttackedpassant[positions[`${row}+${col-1}`]];
-                                    return;
-                                }
-                                if(checkPassant===true && Utils.canbeAttackedpassant[positions[`${row}+${col+1}`]]!==undefined){
-                                    flag = `${row}+${col+1}`;
-                                    done = true;
-                                    delete Utils.canbeAttackedpassant[positions[`${row}+${col+1}`]];
-                                    return;
-                                }
-                            }
-                        }
+            } else {
+                if(positions[selectedLocation].color ==='black'){
+                    plainMoves[`${row-1}+${col}`] = true;
+                    attackMoves[`${row-1}+${col-1}`] = true;
+                    attackMoves[`${row-1}+${col+1}`] = true;
+                    if(row===6){
+                        plainMoves[`${row-2}+${col}`] = true;
                     }
-                });
-                if(done===false){
-                    plainMoves.forEach(move=>{
-                        if(move[0]===newRow && move[1]===newCol){
-                            if(this.checkConstraints(move)){
-                                if(
-                                    positions[`${move[0]}+${move[1]}`]===undefined
-                                ){
-                                    flag=1;
-                                    return;
-                                }
-                            }
-                        }
-                    });
+                }else{
+                    plainMoves[`${row+1}+${col}`] = true;
+                    attackMoves[`${row+1}+${col-1}`] = true;
+                    attackMoves[`${row+1}+${col+1}`] = true;
+                    if(row===1){
+                        plainMoves[`${row+2}+${col}`] = true;
+                    }
                 }
-                break;
-            default : break;
-        }
-        
-        return flag;
-    }    
+            }
+            
+            if(attackMoves[`${newRow}+${newCol}`]===true){
+                if(checkConstraints([newRow,newCol])){
+                    if(positions[id]!==undefined && positions[id].color!==turn){
+                        return 1;
+                    }
+                }
+            }
+    
+            if(plainMoves[`${newRow}+${newCol}`]===true){
+                if(checkConstraints([newRow,newCol]) && positions[`${newRow}+${newCol}`]===undefined){
+                    return 1;
+                }
+            }
+            break;
+        case 'knight':
+            let moves={
+                [`${row+2}+${col+1}`] : true,
+                [`${row-2}+${col+1}`] : true,
+                [`${row+1}+${col+2}`] : true,
+                [`${row+1}+${col-2}`] : true,
+                [`${row+2}+${col-1}`] : true,
+                [`${row-2}+${col-1}`] : true,
+                [`${row-1}+${col+2}`] : true,
+                [`${row-1}+${col-2}`] : true,
+            }
+    
+            if(checkConstraints([newRow,newCol]) && moves[`${newRow}+${newCol}`]===true){
+                if( positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
+                    return 1;
+                }
+            }
+            break;
+        case 'rook':
+            if(checkConstraints([newRow,newCol])){
+                let overlap = false;
+                let allowed = false;
+                if(newRow===row && newCol!==col){
+                    overlap = checkRowOverlap(row,col,newCol,positions);
+                    allowed = true;
+                }
+                if(newRow!==row && newCol===col){
+                    overlap = checkColOverlap(col,row,newRow,positions);
+                    allowed = true;
+                }
+                if(overlap===true || allowed ===false){
+                    return 0;
+                }
+                if(positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
+                    return 1;
+                }   
+            }
+            break;
+        case 'king':
+            let square={
+                [`${row+1}+${col}`] : true,
+                [`${row-1}+${col}`] : true,
+                [`${row}+${col+1}`] : true,
+                [`${row}+${col-1}`] : true,
+                [`${row+1}+${col+1}`] : true,
+                [`${row+1}+${col-1}`] : true,
+                [`${row-1}+${col+1}`] : true,
+                [`${row-1}+${col-1}`] : true,
+            }
+            
+            if(checkConstraints([newRow,newCol]) && square[`${newRow}+${newCol}`]===true){
+                if(positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
+                    return 1;
+                }
+            }
+            break;
+        case 'queen':
+            if(checkConstraints([newRow,newCol])){
+                let overlap = false;
+                let allowed = false;
+                if(newRow===row && newCol!==col){
+                    overlap = checkRowOverlap(row,col,newCol,positions);
+                    allowed = true;
+                }
+                if(newRow!==row && newCol===col){
+                    overlap = checkColOverlap(col,row,newRow,positions);
+                    allowed = true;
+                }
+                if(newRow + newCol === row + col){
+                    overlap = checkforwardDiagonalOverlap(row,col,newRow,newCol,positions);
+                    allowed = true;
+                }
+                if(newRow - newCol + 7 === row - col + 7){
+                    overlap = checkbackwardDiagonalOverlap(row,col,newRow,newCol,positions);
+                    allowed = true;
+                }
+                if(overlap===true || allowed ===false){
+                    return 0;
+                }
+                if(positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
+                    return 1;
+                }   
+            }
+            break;
+        case 'bishop':
+            if(checkConstraints([newRow,newCol])){
+                let overlap = false;
+                let allowed = false;
+                if(newRow + newCol === row + col){
+                    overlap = checkforwardDiagonalOverlap(row,col,newRow,newCol,positions);
+                    allowed = true;
+                }
+                if(newRow - newCol + 7 === row - col + 7){
+                    overlap = checkbackwardDiagonalOverlap(row,col,newRow,newCol,positions);
+                    allowed = true;
+                }
+                if(overlap===true || allowed ===false){
+                    return 0;
+                }
+                if(positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
+                    return 1;
+                }   
+            }
+            break;
+        default : break;
+    }
 }
 
 class MiniMax {
     constructor(turn){
-        this.utils = new Utils();
         this.turn = turn;
         let pawnEvalSelf =
             [
@@ -355,9 +375,9 @@ class MiniMax {
     generateMoves=(turn,positions)=>{
         let moves = [];
         for(let i=0;i<64;i++){
-            if(positions[this.squares[i]]!==undefined && positions[this.squares[i]].substring(0,5)===turn){
+            if(positions[this.squares[i]]!==undefined && positions[this.squares[i]].color===turn){
                 for(let j=0;j<64;j++){
-                    if(this.utils.checkValidMove(this.squares[j],this.squares[i],positions,turn,false)!==0){
+                    if(checkValidMove(this.squares[j],this.squares[i],positions,turn)!==0){
                         moves.push([this.squares[i],this.squares[j]]);
                     }
                 }
@@ -366,39 +386,41 @@ class MiniMax {
         return moves;
     }
 
-    
-
     minimaxRoot =function(depth,isMaximisingPlayer,turn,positions) {
-
-        var newGameMoves = this.generateMoves(turn,{...positions});
-        var bestMove = -9999;
-        var bestMoveFound;
-    
-        for(var i = 0; i < newGameMoves.length; i++) {
-            var newGameMove = newGameMoves[i]
-            let piece = positions[newGameMove[0]];
-            positions[newGameMove[1]] = piece;
-            delete positions[newGameMove[0]];
-
-            var value = this.minimax(
-                depth - 1,
-                -10000,
-                10000,
-                !isMaximisingPlayer,
-                {...positions},
-                turn==='white' ? 'black' : 'white'
-            );
-
-            piece = positions[newGameMove[1]];
-            positions[newGameMove[0]] = piece;
-            delete positions[newGameMove[1]];
-
-            if(value >= bestMove) {
-                bestMove = value;
-                bestMoveFound = newGameMove;
+        return new Promise((resolve,reject)=>{
+            try {
+                var newGameMoves = this.generateMoves(turn,{...positions});
+                var bestMove = -9999;
+                var bestMoveFound;
+                for(var i = 0; i < newGameMoves.length; i++) {
+                    var newGameMove = newGameMoves[i]
+                    let piece = positions[newGameMove[0]];
+                    positions[newGameMove[1]] = piece;
+                    delete positions[newGameMove[0]];
+        
+                    var value = this.minimax(
+                        depth - 1,
+                        -10000,
+                        10000,
+                        !isMaximisingPlayer,
+                        {...positions},
+                        turn==='white' ? 'black' : 'white'
+                    );
+        
+                    piece = positions[newGameMove[1]];
+                    positions[newGameMove[0]] = piece;
+                    delete positions[newGameMove[1]];
+        
+                    if(value >= bestMove) {
+                        bestMove = value;
+                        bestMoveFound = newGameMove;
+                    }
+                }
+                resolve(bestMoveFound);
+            } catch (error) {
+                reject(error);
             }
-        }
-        return bestMoveFound;
+        })
     };
     
     minimax = function (depth,alpha, beta, isMaximisingPlayer,positions,turn) {
@@ -507,10 +529,10 @@ class MiniMax {
             return 0;
         }
 
-        var absoluteValue = this.getAbsoluteValue(piece.substring(6), piece.substring(0,5) === 'white', x ,y);
+        var absoluteValue = this.getAbsoluteValue(piece.type, piece.color === 'white', x ,y);
         return this.turn==='white' ? 
-        piece.substring(0,5) === 'white' ? absoluteValue : -absoluteValue : 
-        piece.substring(0,5) === 'white' ? -absoluteValue : absoluteValue;
+        piece.color === 'white' ? absoluteValue : -absoluteValue : 
+        piece.color === 'white' ? -absoluteValue : absoluteValue;
     };
     
 }
@@ -518,44 +540,3 @@ class MiniMax {
 module.exports = {
     minimax : MiniMax
 }
-/*
-const initialPositionsWhite = {
-    '0+0' : 'black0rook',
-    '0+1' : 'black0knight',
-    '0+2' : 'black0bishop',
-    '0+3' : 'black0queen',
-    '0+4' : 'black0king',
-    '0+5' : 'black1bishop',
-    '0+6' : 'black1knight',
-    '0+7' : 'black1rook',
-    '1+0' : 'black0pawn',
-    '1+1' : 'black1pawn',
-    '1+2' : 'black2pawn',
-    '1+3' : 'black3pawn',
-    '1+4' : 'black4pawn',
-    '1+5' : 'black5pawn',
-    '1+6' : 'black6pawn',
-    '1+7' : 'black7pawn',
-    '6+0' : 'white0pawn',
-    '6+1' : 'white1pawn',
-    '6+2' : 'white2pawn',
-    '6+3' : 'white3pawn',
-    '6+4' : 'white4pawn',
-    '6+5' : 'white5pawn',
-    '6+6' : 'white6pawn',
-    '6+7' : 'white7pawn',
-    '7+0' : 'white0rook',
-    '7+1' : 'white0knight',
-    '7+2' : 'white0bishop',
-    '7+3' : 'white0queen',
-    '7+4' : 'white0king',
-    '7+5' : 'white1bishop',
-    '7+6' : 'white1knight',
-    '7+7' : 'white1rook'
-}
-
-const minimax = new MiniMax('white')
-let start = new Date().getTime();
-console.log(minimax.minimaxRoot(3,true,'black',{...initialPositionsWhite}))
-let end = new Date().getTime();
-console.log((end-start)/1000)*/
