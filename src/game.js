@@ -85,6 +85,7 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
             if(positions[id]!==undefined && turn===positions[id].getColor()){
                 setSelectedLocation(id);
             } else {
+
                 if(type==='king'){
                     if(positions[selectedLocation].moved===false){
                         let castling_positions = positions[selectedLocation].checkCastling(id,selectedLocation,{...positions});
@@ -102,18 +103,16 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
                     if(type==='king' || type==='rook'){
                         positions[selectedLocation].setMoved();
                     }
-                }
-
-                if(type==='pawn'){
-                    if(flag!==0){
+                    if(type==='pawn'){
                         positions[selectedLocation].promote(turn,initialTurn,id)
                     }
-                }
+                } 
                 
                 let piece = positions[id]===undefined ? null : positions[id];
                 playMove(flag,selectedLocation,id,piece===null ? piece : piece.getId());
                 setTurn(initialTurn==='white' ? 'black' : 'white');
                 checkGameOver(turn)
+
                 if(flag!==0 && gameWithAI===false){
                     socket.emit("move",{
                         move : [selectedLocation,id,initialTurn,piece===null ? piece : piece.getId()],
@@ -121,6 +120,7 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
                         room : game._id
                     })
                 }
+
             }
         } else {
             if(positions[id]!==undefined && turn===positions[id].getColor()){
@@ -147,7 +147,7 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
                     positions : getCompressedObject({...positions}),
                     turn : turn
                 }
-                ,'GET',token)
+                ,'POST',token)
                 .then(response=>{
                     let move = response.data.message;
                     playMove(1,move.selectedLocation,move.id,move.piece);
@@ -205,7 +205,6 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
             setCheck(null)
         }
     }
-
    
     const undoHandler = ()=>{
         if(moves.length===0 || gameOver===true){

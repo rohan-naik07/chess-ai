@@ -117,6 +117,9 @@ const Dialog = props =>{
         if(token===null){
             return;
         }
+        if(turn===null){
+            return;
+        }
         const game = {
             "participant2" : user.userName==='AI' ? null : user._id ,
             "initialTurn" : turn,
@@ -140,6 +143,7 @@ const Dialog = props =>{
             window.alert(error)
         }
     }
+
     const onChangeText = (event)=>{
         event.preventDefault();
         setQuery(event.target.value)
@@ -152,7 +156,6 @@ const Dialog = props =>{
 
     const onRefresh = ()=>{
         getFromServer(GET_USERS_URL,null,'GET',token).then(response=>{
-            console.log(response)
             if(response.status!==200){
                 window.alert(response.data.message)
             }
@@ -160,7 +163,6 @@ const Dialog = props =>{
                 window.alert(response.data.message)
             }
             setOnlineUsers(response.data.message)
-            console.log(response.data.message)
         }).catch (error=>{
             window.alert(error)
         })

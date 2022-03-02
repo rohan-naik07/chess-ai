@@ -7,6 +7,7 @@ let games = require('../db').gameModel;
 let users = require('../db').userModel;
 let minimax = require('../minimax').minimax;
 const { endpoints,errorMessages } = require('../utils');
+const logger = new Singleton().getloggerInstance()
 
 router.route(endpoints.BASE).get(
     verifyToken,
@@ -22,13 +23,14 @@ router.route(endpoints.BASE).get(
             'initialTurn' : object.initialTurn
         })
         .then(game=>{
+            logger.log(game._id)
             return res.status(200).json({
                 error: false,
                 message: game._id
             })
         })
         .catch(error=>{
-            console.error(error)
+            logger.log(error)
             return res.status(500).json({
                 error: true,
                 message: errorMessages.FAILED_GAMEID_RETRIEVE
@@ -37,29 +39,25 @@ router.route(endpoints.BASE).get(
     }
 ) // get a new game id
 
-router.route(endpoints.GET_FROM_AI).get(
+router.route(endpoints.GET_FROM_AI).post(
     verifyToken,
     function(req,res) {
-        console.log(req.body)
         let positions = req.body.positions;
         let turn = req.body.turn;
-        new minimax(turn).minimaxRoot(3,true,turn==='white' ? 'black' : 'white',{...positions})
+        new minimax(turn==='white' ? 'black' : 'white').minimaxRoot(3,true,turn,{...positions})
         .then(answer=>{
-                console.log(answer)
-                let start = new Date().getTime();
-                let end = new Date().getTime();
-                console.log((end-start)/1000)
+                logger.log(answer)
                 res.status(200).json({
                     error: true,
                     message: {
                         selectedLocation : answer[0],
                         id : answer[1],
-                        piece : positions[id]!==undefined ? null : positions[id]
+                        piece : positions[answer[1]]===undefined ? null : positions[answer[1]]
                     }
                 });
             }
         ).catch(error=>{
-            console.error(error)
+            logger.log(error)
             res.status(500).json({
                 error: true,
                 message: errorMessages.FAILED_RETRIEVE_AI
@@ -94,14 +92,14 @@ router.route(endpoints.USER_GAME).get(
             }
         )
         .then(user=>{
-            console.log(user)
+            logger.log(user)
             res.status(200).json({
                 error: false,
                 message: user.games
             })
         })
         .catch(error=>{
-            console.error(error)
+            logger.log(error)
             res.status(500).json({
                 error: true,
                 message: errorMessages.FAILED_USER_GAMES
@@ -129,14 +127,14 @@ router.route(endpoints.GAME).get(
             }
         )
         .then(game=>{
-            console.log(game)
+            logger.log(game)
             res.status(200).json({
                 error: false,
                 message: game
             })
         })
         .catch(error=>{
-            console.error(error)
+            logger.log(error)
             res.status(500).json({
                 error: true,
                 message: errorMessages.FAILED_FETCH_GAME
@@ -168,7 +166,7 @@ router.route(endpoints.GAME).get(
                     return game;
                 }
             ).catch(error=>{
-                console.error(error)
+                logger.log(error)
                 res.status(500).json({
                     error: true,
                     message: errorMessages.FAILED_POST_GAME
@@ -186,7 +184,7 @@ router.route(endpoints.GAME).get(
                     }) 
                 }
             ).catch(error=>{
-                console.error(error)
+                logger.log(error)
                 res.status(500).json({
                     error: true,
                     message:  errorMessages.FAILED_POST_GAME
@@ -194,7 +192,7 @@ router.route(endpoints.GAME).get(
             })
         })
         .catch(error=>{
-            console.error(error)
+            logger.log(error)
             res.status(500).json({
                 error: true,
                 message:  errorMessages.FAILED_POST_GAME
@@ -207,14 +205,14 @@ router.route(endpoints.GAME).get(
         const game_id = req.params.gameId;
         games.findByIdAndUpdate(game_id,req.body.data,{new : true})
         .then(game=>{
-            console.log(game)
+            logger.log(game)
             res.status(200).json({
                 error: false,
                 message: game
             })
         })
         .catch(error=>{
-            console.error(error)
+            logger.log(error)
             res.status(500).json({
                 error: true,
                 message:  errorMessages.FAILED_PUT_GAME
@@ -227,14 +225,14 @@ router.route(endpoints.GAME).get(
         const game_id = req.params.gameId;
         games.findByIdAndDelete(game_id)
         .then(games=>{
-            console.log(games)
+            logger.log(games)
             res.status(200).json({
                 error: false,
                 message: games
             })
         })
         .catch(error=>{
-            console.error(error)
+            logger.log(error)
             res.status(500).json({
                 error: true,
                 message:  errorMessages.FAILED_DELETE_GAME

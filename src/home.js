@@ -57,7 +57,6 @@ const Home = (props)=>{
     React.useEffect(()=>{
         const id = jwtDecode(token)._id
         getFromServer(GAME_BASE_URL + id,null,'GET',token).then(response=>{
-            console.log(response)
             if(response.status!==200){
                 window.alert(response.data.message)
             }

@@ -171,7 +171,7 @@ const checkValidMove = (id,selectedLocation,positions,turn,initialTurn)=>{
             }
     
             if(checkConstraints([newRow,newCol]) && moves[`${newRow}+${newCol}`]===true){
-                if( positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
+                if( positions[id]===undefined || (positions[id]!==undefined && positions[id].color!==turn)){
                     return 1;
                 }
             }
@@ -191,7 +191,7 @@ const checkValidMove = (id,selectedLocation,positions,turn,initialTurn)=>{
                 if(overlap===true || allowed ===false){
                     return 0;
                 }
-                if(positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
+                if(positions[id]===undefined || (positions[id]!==undefined && positions[id].color!==turn)){
                     return 1;
                 }   
             }
@@ -209,7 +209,7 @@ const checkValidMove = (id,selectedLocation,positions,turn,initialTurn)=>{
             }
             
             if(checkConstraints([newRow,newCol]) && square[`${newRow}+${newCol}`]===true){
-                if(positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
+                if(positions[id]===undefined || (positions[id]!==undefined && positions[id].color!==turn)){
                     return 1;
                 }
             }
@@ -237,7 +237,7 @@ const checkValidMove = (id,selectedLocation,positions,turn,initialTurn)=>{
                 if(overlap===true || allowed ===false){
                     return 0;
                 }
-                if(positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
+                if(positions[id]===undefined || (positions[id]!==undefined && positions[id].color!==turn)){
                     return 1;
                 }   
             }
@@ -257,7 +257,7 @@ const checkValidMove = (id,selectedLocation,positions,turn,initialTurn)=>{
                 if(overlap===true || allowed ===false){
                     return 0;
                 }
-                if(positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
+                if(positions[id]===undefined || (positions[id]!==undefined && positions[id].color!==turn)){
                     return 1;
                 }   
             }
@@ -377,7 +377,7 @@ class MiniMax {
         for(let i=0;i<64;i++){
             if(positions[this.squares[i]]!==undefined && positions[this.squares[i]].color===turn){
                 for(let j=0;j<64;j++){
-                    if(checkValidMove(this.squares[j],this.squares[i],positions,turn)!==0){
+                    if(checkValidMove(this.squares[j],this.squares[i],positions,turn,this.turn)===1){
                         moves.push([this.squares[i],this.squares[j]]);
                     }
                 }

@@ -21,7 +21,6 @@ const GameWrapper = (props) =>{
         getFromServer(GET_GAME_URL+gameId,null,'GET',token)
         .then(response=>{
             const user_id = jwtDecode(token)._id
-            console.log(response.data.message)
             if(
                 user_id===response.data.message.participant1._id ||
                 user_id===response.data.message.participant2._id

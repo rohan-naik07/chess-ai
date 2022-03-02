@@ -1,4 +1,4 @@
-export const endpoints = {
+const endpoints = {
     BASE : '/',
     LOGIN : '/login',
     REGISTER : '/register',
@@ -7,7 +7,7 @@ export const endpoints = {
     GAME : '/:gameId'
 }
 
-export const errorMessages = {
+const errorMessages = {
     FAILED_GAMEID_RETRIEVE : 'Failed to retrieve game ID',
     FAILED_RETRIEVE_AI : 'Failed to retrive from AI',
     FAILED_USER_GAMES : 'Failed to get user games',
@@ -22,4 +22,9 @@ export const errorMessages = {
     USER_EXISTS : 'User already exists',
     UNAUTHORIZED : 'Access is unauthorized',
     FAILED_FETCH_USER : 'Failed to get users'
+}
+
+module.exports = {
+    endpoints,
+    errorMessages
 }

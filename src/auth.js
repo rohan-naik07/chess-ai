@@ -49,7 +49,7 @@ const Auth = (props)=>{
         }
         if(isSignUp===true){
             if(inputData.password!==inputData.confirm_password){
-                window.alert("Please put all the required values")
+                window.alert("Passwords do not match")
                 return;
             }
             try {
@@ -102,7 +102,7 @@ const Auth = (props)=>{
     }
 
     const onClickh5 = ()=>setSignUp(!isSignUp)
-    console.log(token)
+    
     if(token){
         return <Navigate to='/home'/>
     }
