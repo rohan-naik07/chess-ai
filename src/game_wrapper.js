@@ -2,13 +2,14 @@ import jwtDecode from "jwt-decode";
 import React from "react";
 import { useNavigate, useParams } from "react-router";
 import Game from "./game";
-import { getFromServer, getSocket, GET_GAME_URL } from "./tools/urls";
+import { getGame, getSocket } from "./tools/urls";
 
 const GameWrapper = (props) =>{
     const socket = getSocket();
     const {token} = props;
     const {gameId} = useParams();
     const history = useNavigate();
+    
     const [game,setGame] = React.useState({});
     const [loading,setLoading] = React.useState(true);
     const [gameWithAI,setgameWithAI] = React.useState(false);
@@ -18,7 +19,7 @@ const GameWrapper = (props) =>{
             history('/');
             return;
         }
-        getFromServer(GET_GAME_URL+gameId,null,'GET',token)
+        getGame(gameId,token)
         .then(response=>{
             const user_id = jwtDecode(token)._id
             if(

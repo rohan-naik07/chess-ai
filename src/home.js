@@ -3,7 +3,7 @@ import React from "react";
 import { Navigate, useNavigate } from "react-router";
 import Dialog from "./dialog";
 import image from './pieces/ChessPiecesArray.png';
-import { GAME_BASE_URL, getFromServer } from "./tools/urls";
+import { getUserGames,deleteGame } from "./tools/urls";
 
 const styles = {
     top : {
@@ -54,18 +54,15 @@ const Home = (props)=>{
         localStorage.removeItem('token')
         history('/')
     }
+
     React.useEffect(()=>{
         const id = jwtDecode(token)._id
-        getFromServer(GAME_BASE_URL + id,null,'GET',token).then(response=>{
-            if(response.status!==200){
-                window.alert(response.data.message)
-            }
-            if(response.error===true){
-                window.alert(response.data.message)
-            }
+        getUserGames(id,token).then(response=>{
+            console.log(response)
             setUserGames(response.data.message)
-        }).catch (error=>{
-            window.alert(error)
+        }).catch(error=>{
+            console.error(error)
+            window.alert("Failed to fetch user games")
         })
     },[])
 

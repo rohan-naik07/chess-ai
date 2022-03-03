@@ -50,13 +50,13 @@ router.post(
     Users.findOne({userName : req.body.userName})
     .then(async user=>{
       if (!user)
-        return res.status(500).json({
+        return res.status(200).json({
             error: true,
             message: errorMessages.WRONG_USERNAME,
         });
         const validatePassword = await bcrypt.compare( req.body.password,user.password); 
       if (!validatePassword)
-          return res.status(500).json({
+          return res.status(200).json({
               error: true,
               message: errorMessages.WRONG_PASSWORD,
           });
@@ -89,7 +89,7 @@ router.post(
     Users.findOne({userName : req.body.userName})
     .then(async user=>{
       if (user)
-        return res.status(400).json({ error: true, message: errorMessages.USER_EXISTS });
+        return res.status(200).json({ error: true, message: errorMessages.USER_EXISTS });
         const salt = await bcrypt.genSalt(10);
         const password = await bcrypt.hash(req.body.password, salt);
         Users.create({

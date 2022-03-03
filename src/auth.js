@@ -1,8 +1,9 @@
 import React from "react";
 import image from './pieces/ChessPiecesArray.png';
-import { getFromServer, REGISTER_URL,LOGIN_URL } from "./tools/urls";
+import { registerUser, loginUser } from "./tools/urls";
 import { useNavigate } from 'react-router-dom';
 import { Navigate } from "react-router";
+
 const styles = {
     root : {
         position : 'fixed',
@@ -41,11 +42,16 @@ const Auth = (props)=>{
     });
     const [isSignUp,setSignUp] = React.useState(false);
     const history = useNavigate();
+
     const onSubmit = async (event)=>{
         event.preventDefault();
         if(inputData.userName==='' || inputData.password===''){
             window.alert("Please put all the required values")
             return;
+        }
+        let data = {
+            userName: inputData.userName,
+            password : inputData.password
         }
         if(isSignUp===true){
             if(inputData.password!==inputData.confirm_password){
@@ -53,48 +59,26 @@ const Auth = (props)=>{
                 return;
             }
             try {
-                const response = await getFromServer(
-                    REGISTER_URL,
-                    {
-                        userName: inputData.userName,
-                        password : inputData.password
-                    },
-                    'POST'
-                )
-                console.log(response)
-                if(response.status!==200){
-                    window.alert(response.data.message)
+                const response = await registerUser(data)
+                if(response.data.token===undefined){
+                    throw new Error(response.data.message)
                 }
-                if(response.data.error===true){
-                    window.alert(response.data.message)
-                }
-
                 localStorage.setItem('token',response.data.token)
                 setToken(response.data.token)
-                history('/home');
+                history('/home')
             } catch (error) {
                 window.alert(error)
             }
         } else {
             try {
-                const response = await getFromServer(
-                    LOGIN_URL,
-                    {
-                        userName: inputData.userName,
-                        password : inputData.password
-                    },
-                    'POST'
-                )
-                if(response.status!==200){
-                    window.alert(response.data.message)
+                const response = await loginUser(data)
+                if(response.data.token===undefined){
+                    throw new Error(response.data.message)
                 }
-                if(response.error===true){
-                    window.alert(response.data.message)
-                }
+                console.log(response)
                 localStorage.setItem('token',response.data.token)
                 setToken(response.data.token)
-                history('/home');
-                
+                history('/home')
             } catch (error) {
                 window.alert(error)
             }

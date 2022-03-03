@@ -1,5 +1,5 @@
 import React from 'react';
-import { getFromServer,GET_GAME_URL,GET_USERS_URL } from "./tools/urls";
+import { getGameId,getUsers } from "./tools/urls";
 
 const styles = {
     root : {
@@ -99,16 +99,13 @@ const Dialog = props =>{
 
     React.useEffect(()=>{
         if(showDialog===true){
-            getFromServer(GET_USERS_URL,null,'GET',token).then(response=>{
-                if(response.status!==200){
-                    window.alert(response.data.message)
+            getUsers(token).then(
+                response=>{
+                    setOnlineUsers(response.data.message)
                 }
-                if(response.error===true){
-                    window.alert(response.data.message)
-                }
-                setOnlineUsers(response.data.message)
-            }).catch (error=>{
-                window.alert(error)
+            ).catch (error=>{
+                console.log(error)
+                window.alert("Failed to fetch users")
             })
         }
     },[showDialog])
@@ -125,22 +122,11 @@ const Dialog = props =>{
             "initialTurn" : turn,
         }
         try {
-            const response = await getFromServer(
-                GET_GAME_URL,
-                game,
-                'GET',
-                token,
-                true
-            );
-            if(response.status!==200){
-                window.alert(response.data.message)
-            }
-            if(response.error===true){
-                window.alert(response.data.message)
-            }
+            const response = await getGameId(game,token);
             setUrl(`http://localhost:3000/game/${response.data.message}`)
         } catch (error) {
-            window.alert(error)
+            console.log(error)
+            window.alert("Failed to fetch game id")
         }
     }
 
@@ -155,16 +141,13 @@ const Dialog = props =>{
     }
 
     const onRefresh = ()=>{
-        getFromServer(GET_USERS_URL,null,'GET',token).then(response=>{
-            if(response.status!==200){
-                window.alert(response.data.message)
+        getUsers(token).then(
+            response=>{
+                setOnlineUsers(response.data.message)
             }
-            if(response.error===true){
-                window.alert(response.data.message)
-            }
-            setOnlineUsers(response.data.message)
-        }).catch (error=>{
-            window.alert(error)
+        ).catch (error=>{
+            console.log(error)
+            window.alert("Failed to fetch users on refresh")
         })
     }
 

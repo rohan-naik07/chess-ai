@@ -7,7 +7,7 @@ import {isinCheck,isCheckmated} from './util';
 import './App.css'
 import Timer from "./timer";
 import jwtDecode from "jwt-decode";
-import { getFromServer, GET_AI_URL } from "./tools/urls";
+import {  getMovefromAI,updateGameMoves,updateUserGames } from "./tools/urls";
 
 function getBoard(){
   const board = [];
@@ -142,12 +142,13 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
                 } else {
                     setCheck(null);
                 } 
-                getFromServer(GET_AI_URL,
-                {
-                    positions : getCompressedObject({...positions}),
-                    turn : turn
-                }
-                ,'POST',token)
+                getMovefromAI(
+                    {
+                        positions : getCompressedObject({...positions}),
+                        turn : turn
+                    },
+                    token
+                )
                 .then(response=>{
                     let move = response.data.message;
                     playMove(1,move.selectedLocation,move.id,move.piece);
