@@ -7,7 +7,7 @@ import {isinCheck,isCheckmated} from './util';
 import './App.css'
 import Timer from "./timer";
 import jwtDecode from "jwt-decode";
-import {  getMovefromAI,updateGameMoves,updateUserGames } from "./tools/urls";
+import {  getMovefromAI,updateGameMoves } from "./tools/urls";
 
 function getBoard(){
   const board = [];
@@ -38,16 +38,30 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
     const [turn,setTurn] = React.useState(initialTurn);
     const [selectedLocation,setSelectedLocation] = React.useState(null);
     const [moves,setMoves] = React.useState([]);
-    const [gameOver,setGameOver] = React.useState(false);
+    const [gameOver,setGameOver] = React.useState(null);
     const [check,setCheck] = React.useState(null);
 
-    const quitGame = ()=>{
-        // update game with moves and result
-        if(gameWithAI===false)
-            socket.emit("abandon",{room : game._id});
-        history('/home');
-    }
+    const quitGame = (result)=>{
+        let resultData={
+            moves : moves,
+            result : result
+        }
 
+        updateGameMoves(game._id,resultData,token).then(
+            response=>{
+                console.log(response)
+                if(gameWithAI===false)
+                    socket.emit("abandon",{room : game._id});
+                history('/home');
+            }
+        ).catch(
+            error=>{
+                console.log(error)
+                window.alert("failed to update game")
+            }
+        )
+    }
+       
     const playMove = (flag,selectedLocation,id,piece)=>{
         if(flag!==0){
             setSelectedLocation(null);                
@@ -68,14 +82,14 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
 
     
     const onClickHandler = (id)=>{
-        if(gameOver===true){
+        if(gameOver!==null){
             return;
         }
         if(selectedLocation===null && initialTurn!==turn){
             return;
         }
         if(isinCheck(turn,{...positions})){
-            setGameOver(true);
+            setGameOver(turn);
             return;
         } else {
             setCheck(null);
@@ -129,15 +143,15 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
         }
     }  
 
-    const getFromAI = ()=>{
-        if(gameOver===true){
+    const getFromAI = async ()=>{
+        if(gameOver!==null){
             return;
         }
         
         try {
             if(turn!==initialTurn){
                 if(isinCheck(turn,{...positions})){
-                    setGameOver(true);
+                    setGameOver(turn);
                     return;
                 } else {
                     setCheck(null);
@@ -192,7 +206,26 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }
    
-    React.useEffect(gameWithAI===false ? registerSocketListeners:getFromAI,gameWithAI===false ? []: [turn])
+    const getDependencyArray = ()=>{
+        if(gameWithAI===false){
+            return [gameOver]
+        }
+        return [gameOver,turn]
+    }
+
+    React.useEffect(()=>{
+        if(gameOver!==null){
+            setTimeout(()=>{
+                quitGame(gameOver)
+            },2000)
+            return;
+        }
+        if(gameWithAI===false){
+            registerSocketListeners();
+        } else{
+            getFromAI()
+        }
+    },getDependencyArray())
     
     const checkGameOver = (turn)=>{
         const isCheck = isinCheck(turn,{...positions});
@@ -200,7 +233,7 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
             setCheck(turn==='white' ? 'black' : 'white')
             const over = isCheckmated(turn,{...positions});
             if(over===true){
-                setGameOver(over);
+                setGameOver(turn);
             } 
         }else{
             setCheck(null)
@@ -270,9 +303,11 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
     }
 
     const displayMessage = ()=>{
-        if(gameOver===true){
+        if(gameOver!==null){
             return (
-                <h4 style={{color : 'yellow'}}>Checkmate!!</h4>
+                gameOver==='ab' ?
+                <h4 style={{color : 'brown'}}>{`Game abandoned`}</h4>
+                : <h4 style={{color : gameOver}}>{`${gameOver} wins!!`}</h4>
             )
         }
         if(check===null){
@@ -340,9 +375,12 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
             <div className="actions">
                 <div style={styles.undo} onClick={()=>{
                     undoHandler()
-                    socket.emit("undo",{room : game._id});
+                    if(gameWithAI===true)
+                        undoHandler()
+                    else
+                        socket.emit("undo",{room : game._id});
                 }}>Undo</div>
-                <div style={styles.abandon} onClick={quitGame}>Abandon</div>
+                <div style={styles.abandon} onClick={()=>setGameOver('ab')}>Abandon</div>
             </div>
         </div>
     </div>

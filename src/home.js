@@ -39,12 +39,104 @@ const Home = (props)=>{
     const [userGames,setUserGames] = React.useState([]);
     const [showDialog,setShowDialog] = React.useState(false);
     const {token,setToken} = props
+    const user_id = jwtDecode(token)._id
     const history = useNavigate()
 
-    const renderGame = (game)=>(
-        <div key={game._id}>
-            <div>
+    const deleteGameHandler = (gameId)=>{
+        deleteGame(gameId,token).then(
+            response=>{
+                console.log(response)
+                setUserGames(userGames.filter(game=>game._id!==gameId))
+            }
+        ).catch(
+            error=>{
+                console.log(error);
+                window.alert('Failed to delete game')
+            }
+        )
+    }
 
+    const getInitialTurnDiv = (initialTurn)=>(
+        <div style={{
+            margin:5,
+            padding:5,
+            borderRadius : 10,
+            backgroundColor : initialTurn,
+            color : initialTurn==='white' ? 'black' : 'white',
+            border: 'solid #000',
+            borderWidth: '1px',
+            textAlign : "center"
+        }}>Initial Turn</div>
+    )
+
+    const getResultDiv = (result)=>{
+        if(result==='ab'){
+            return (
+                <div style={{
+                    margin:5,
+                    padding:5,
+                    borderRadius : 10,
+                    backgroundColor : 'brown',
+                    color : 'white',
+                    border: 'solid #000',
+                    borderWidth: '1px',
+                    textAlign : "center"
+                }}>Abandoned</div>
+            )
+        }
+        return (
+            <div style={{
+                margin:5,
+                padding:5,
+                borderRadius : 10,
+                border: 'solid #000',
+                borderWidth: '1px',
+                backgroundColor : result,
+                color : result==='white' ? 'black' : 'white',
+                textAlign : "center"
+            }}>Winner</div>
+        )
+    }
+    
+
+    const renderGame = (game)=>(
+        <div key={game._id}  style={{
+            margin:10,
+            padding:10,
+            overflow:'hidden',
+            borderRadius : 10
+        }}>
+            <div style={{
+                display : 'flex',
+                alignItems : 'center',
+                justifyContent : 'space-between',
+                padding:5,
+                backgroundColor:'brown',
+                color:'white'
+            }}>
+                <h3>{
+                    game.participant1._id===user_id ? 
+                    `You VS ${game.participant2.userName}` : `${game.participant2.userName} VS You`
+                }</h3>
+                <h6>{`played on ${game.played_on}`}</h6>
+            </div>
+            <div style={{
+                display : 'flex',
+                alignItems : 'center',
+                justifyContent : 'space-between',
+                padding:5
+            }}>
+                <React.Fragment>{getInitialTurnDiv(game.initialTurn)}</React.Fragment>
+                <React.Fragment>{getResultDiv(game.result)}</React.Fragment>
+            </div>
+            <div style={{
+                display : 'flex',
+                alignItems : 'center',
+                justifyContent : 'space-between',
+                padding:5
+            }}>
+                <div><button style={styles.button} onClick={()=>deleteGameHandler(game._id)}>Delete Game</button></div>
+                <div><button style={styles.button}>View Game</button></div>
             </div>
         </div>
     )

@@ -144,40 +144,16 @@ export const getGame = (gameId,token)=>{
     })
 }
 
-export const updateUserGames = (gameId,game,token)=>{
-    return new Promise((resolve,reject)=>{
-        let config = {
-            data : game,
-            headers: { 
-                authorization: `Bearer ${token}`,
-                'Content-Type': 'application/json' 
-            }
-        };
-        axios.post(GET_GAME_URL+gameId,config).then(
-            response=>{
-                if(response.status!==200){
-                    reject(response.data.message)
-                }
-                resolve(response)
-            }
-        ).catch(
-            error=>{
-                reject(error)
-            }
-        )
-    })
-}
-
 export const updateGameMoves = (gameId,moves,token)=>{
     return new Promise((resolve,reject)=>{
+        console.log(token)
         let config = {
-            data : moves,
             headers: { 
                 authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json' 
             }
         };
-        axios.put(GET_GAME_URL+gameId,config).then(
+        axios.put(GET_GAME_URL+gameId,moves,config).then(
             response=>{
                 if(response.status!==200){
                     reject(response.data.message)

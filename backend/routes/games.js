@@ -70,32 +70,29 @@ router.route(endpoints.USER_GAME).get(
     verifyToken,
     function(req,res) {
         const user_id = req.params.userId;
-        users.findById(user_id)
-        .populate(
-            { 
-              path: 'games',
-              model: 'Game',
-              populate : {
+        games.find(
+            {
+                $or : [
+                    {'participant1' : user_id},
+                    {'participant2' : user_id}
+                ]
+            }
+        ).populate(
+            {
                 path : 'participant1',
                 model : 'User'
-              }
             }
         )
         .populate(
-            { 
-              path: 'games',
-              model: 'Game',
-              populate : {
+            {
                 path : 'participant2',
                 model : 'User'
-              }
             }
-        )
-        .then(user=>{
-            logger.log(user)
+        ).then(games=>{
+            logger.log(games)
             res.status(200).json({
                 error: false,
-                message: user.games
+                message: games
             })
         })
         .catch(error=>{
@@ -138,64 +135,6 @@ router.route(endpoints.GAME).get(
             res.status(500).json({
                 error: true,
                 message: errorMessages.FAILED_FETCH_GAME
-            });
-        })
-    }
-).post(
-    verifyToken,
-    function(req,res){
-        const game_id = req.params.gameId;
-        games.findById(game_id)
-        .populate(
-            {
-                path : 'participant1',
-                model : 'User'
-            }
-        )
-        .populate(
-            {
-                path : 'participant2',
-                model : 'User'
-            }
-        )
-        .then(game=>{
-            let user_games = game.participant1.games;
-            user_games.push(game._id);
-            users.findByIdAndUpdate(game.participant1._id,{$set : {games : user_games}}).then(
-                ()=>{
-                    return game;
-                }
-            ).catch(error=>{
-                logger.log(error)
-                res.status(500).json({
-                    error: true,
-                    message: errorMessages.FAILED_POST_GAME
-                });
-            })
-        })
-        .then(game=>{
-            let user_games = game.participant2.games;
-            user_games.push(game._id);
-            users.findByIdAndUpdate(game.participant2._id,{$set : {games : user_games}}).then(
-                ()=>{
-                    res.status(200).json({
-                        error: false,
-                        message: game
-                    }) 
-                }
-            ).catch(error=>{
-                logger.log(error)
-                res.status(500).json({
-                    error: true,
-                    message:  errorMessages.FAILED_POST_GAME
-                });
-            })
-        })
-        .catch(error=>{
-            logger.log(error)
-            res.status(500).json({
-                error: true,
-                message:  errorMessages.FAILED_POST_GAME
             });
         })
     }

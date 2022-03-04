@@ -22,15 +22,16 @@ const { Singleton } = require('../ai_id');
   app.set('port', port);
   try {
     await mongoose.connect(dbURL);
+    //mongoose.connection.db.dropDatabase( function(err, result) {console.log(result)});
     let user = await Users.find({userName:'AI'})[0];
-    if(!user){
+    if(user===undefined){
       user = await Users.create({
         userName : 'AI',
         password : 'dummy-password'
       });
     }
+    console.log(user)
     new Singleton().getAIInstance().setId(user._id)
-    mongoose.connection.db.dropCollection('games', function(err, result) {console.log(result)});
   } catch (error) {
     console.log(error)
   }
