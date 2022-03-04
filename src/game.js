@@ -41,7 +41,7 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
     const [gameOver,setGameOver] = React.useState(null);
     const [check,setCheck] = React.useState(null);
 
-    const quitGame = (result)=>{
+    const quitGame = (result,emit)=>{
         let resultData={
             moves : moves,
             result : result
@@ -50,8 +50,8 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
         updateGameMoves(game._id,resultData,token).then(
             response=>{
                 console.log(response)
-                if(gameWithAI===false)
-                    socket.emit("abandon",{room : game._id});
+                if(gameWithAI===false && emit===true)
+                    socket.emit("abandon",{room : game._id,result:result});
                 history('/home');
             }
         ).catch(
@@ -192,10 +192,10 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
             })
             socket.on("disconnect", () =>console.log(socket.id));
             socket.on("undo",()=>undoHandler())
-            socket.on("abandon",()=>quitGame())
+            socket.on("abandon",(args)=>quitGame(args.result,false))
         });
 
-        window.addEventListener('beforeunload',()=>quitGame())
+        window.addEventListener('beforeunload',()=>quitGame('ab',true))
         
         return ()=>{
             socket.off("move",()=>console.log("move listener removed"))
@@ -216,7 +216,7 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
     React.useEffect(()=>{
         if(gameOver!==null){
             setTimeout(()=>{
-                quitGame(gameOver)
+                quitGame(gameOver,true)
             },2000)
             return;
         }
@@ -342,7 +342,7 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
         </div>
         <div className="right-pane">
             <div style={styles.timer}>
-                <div><Timer quitGame={quitGame} turn={turn}/></div>
+                <div><Timer quitGame={()=>quitGame('ab',true)} turn={turn}/></div>
                 <div style={{padding:10}}>{displayMessage()}</div>
             </div>
             <div style={styles.moveList}>

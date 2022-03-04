@@ -23,15 +23,16 @@ const { Singleton } = require('../ai_id');
   try {
     await mongoose.connect(dbURL);
     //mongoose.connection.db.dropDatabase( function(err, result) {console.log(result)});
-    let user = await Users.find({userName:'AI'})[0];
+    let user = await Users.find({userName:'AI'});
+    console.log(user)
     if(user===undefined){
       user = await Users.create({
         userName : 'AI',
         password : 'dummy-password'
       });
     }
-    console.log(user)
-    new Singleton().getAIInstance().setId(user._id)
+    
+    new Singleton().getAIInstance().setId(user[0]._id)
   } catch (error) {
     console.log(error)
   }
@@ -70,7 +71,7 @@ const { Singleton } = require('../ai_id');
       })
     })
     socket.on("undo",(args)=>socket.to(args.room).emit("undo"))
-    socket.on("abandon",(args)=>socket.to(args.room).emit("abandon"))
+    socket.on("abandon",(args)=>socket.to(args.room).emit("abandon",args))
   });
   
   /**

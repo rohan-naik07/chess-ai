@@ -32,7 +32,7 @@ const styles = {
         color : 'white',
         margin : 10,
         fontSize : 20
-    }
+    },
 }
 
 const Home = (props)=>{
@@ -102,7 +102,7 @@ const Home = (props)=>{
     const renderGame = (game)=>(
         <div key={game._id}  style={{
             margin:10,
-            padding:10,
+            backgroundColor : 'grey',
             overflow:'hidden',
             borderRadius : 10
         }}>
@@ -118,7 +118,8 @@ const Home = (props)=>{
                     game.participant1._id===user_id ? 
                     `You VS ${game.participant2.userName}` : `${game.participant2.userName} VS You`
                 }</h3>
-                <h6>{`played on ${game.played_on}`}</h6>
+                <div style={{width:'50px'}}/>
+                <h6>{game.played_on}</h6>
             </div>
             <div style={{
                 display : 'flex',
@@ -132,8 +133,7 @@ const Home = (props)=>{
             <div style={{
                 display : 'flex',
                 alignItems : 'center',
-                justifyContent : 'space-between',
-                padding:5
+                justifyContent : 'space-between'
             }}>
                 <div><button style={styles.button} onClick={()=>deleteGameHandler(game._id)}>Delete Game</button></div>
                 <div><button style={styles.button}>View Game</button></div>

@@ -4,7 +4,6 @@ const { Singleton } = require('../ai_id');
 var router = express.Router();
 const verifyToken = require('./users').verifyToken;
 let games = require('../db').gameModel;
-let users = require('../db').userModel;
 let minimax = require('../minimax').minimax;
 const { endpoints,errorMessages } = require('../utils');
 const logger = new Singleton().getloggerInstance()
@@ -46,7 +45,6 @@ router.route(endpoints.GET_FROM_AI).post(
         let turn = req.body.turn;
         new minimax(turn==='white' ? 'black' : 'white').minimaxRoot(3,true,turn,{...positions})
         .then(answer=>{
-                logger.log(answer)
                 res.status(200).json({
                     error: true,
                     message: {
@@ -89,7 +87,6 @@ router.route(endpoints.USER_GAME).get(
                 model : 'User'
             }
         ).then(games=>{
-            logger.log(games)
             res.status(200).json({
                 error: false,
                 message: games
@@ -124,7 +121,6 @@ router.route(endpoints.GAME).get(
             }
         )
         .then(game=>{
-            logger.log(game)
             res.status(200).json({
                 error: false,
                 message: game
@@ -142,9 +138,8 @@ router.route(endpoints.GAME).get(
     verifyToken,
     function(req,res){
         const game_id = req.params.gameId;
-        games.findByIdAndUpdate(game_id,req.body.data,{new : true})
+        games.findByIdAndUpdate(game_id,req.body,{new : true})
         .then(game=>{
-            logger.log(game)
             res.status(200).json({
                 error: false,
                 message: game
@@ -164,7 +159,6 @@ router.route(endpoints.GAME).get(
         const game_id = req.params.gameId;
         games.findByIdAndDelete(game_id)
         .then(games=>{
-            logger.log(games)
             res.status(200).json({
                 error: false,
                 message: games
