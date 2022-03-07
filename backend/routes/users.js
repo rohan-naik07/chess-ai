@@ -1,9 +1,12 @@
+require('dotenv').config();
 var express = require('express');
 var router = express.Router();
 const jwt = require("jsonwebtoken");
 const Users = require('../db').userModel;
 const bcrypt = require("bcrypt");
 const { endpoints,errorMessages } = require('../utils');
+const { Singleton } = require('../ai_id');
+const logger = new Singleton().getloggerInstance()
 
 const verifyToken = (req,res,next)=>{
   const header = req.headers['authorization'];
@@ -34,7 +37,7 @@ router.route(endpoints.BASE).get(
         }
       )
     }).catch(error=>{
-      console.error(error)
+      logger.log(error)
       res.status(500).json({
         error: true,
         message: errorMessages.FAILED_FETCH_USER
@@ -64,7 +67,7 @@ router.post(
           {
             _id: user._id,
             userName: user.userName
-          },"key"
+          },process.env.jwt_key
       );
       res.status(200).json({ 
           error: false,
@@ -74,7 +77,7 @@ router.post(
       });
     })
     .catch(error=>{
-      console.error(error)
+      logger.log(error)
       res.status(500).json({
         error: true,
         message: errorMessages.FAILED_LOGIN
@@ -99,7 +102,7 @@ router.post(
           const token = jwt.sign({
                 _id: user._id,
                 userName: user.userName
-            },"key");
+            },process.env.jwt_key);
             res.status(200).json({ 
                 error: false,
                 token: token,
@@ -108,7 +111,7 @@ router.post(
             });
         })
         .catch(error=>{
-          console.error(error)
+          logger.log(error)
           res.status(500).json({
             error: true,
             message: errorMessages.FAILED_REGISTER
@@ -116,7 +119,7 @@ router.post(
         })
     })
     .catch(error=>{
-      console.error(error)
+      logger.log(error)
       res.status(500).json({
         error: true,
         message: errorMessages.FAILED_REGISTER

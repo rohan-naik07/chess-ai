@@ -3,7 +3,7 @@
 /**
  * Module dependencies.
  */
-
+require('dotenv').config()
 const { Singleton } = require('../ai_id');
 
 (async ()=>{
@@ -13,7 +13,8 @@ const { Singleton } = require('../ai_id');
   const Users = require('../db').userModel;
   const { Server } = require("socket.io");
   const mongoose = require('mongoose')
-  const dbURL = `mongodb://localhost:27017/test`;
+  const dbURL = process.env.db_URL;
+  const logger = new Singleton().getloggerInstance()
   /**
    * Get port from environment and store in Express.
    */
@@ -22,19 +23,20 @@ const { Singleton } = require('../ai_id');
   app.set('port', port);
   try {
     await mongoose.connect(dbURL);
-    //mongoose.connection.db.dropDatabase( function(err, result) {console.log(result)});
+    //mongoose.connection.db.dropDatabase( function(err, result) {logger.log(result)});
     let user = await Users.find({userName:'AI'});
-    console.log(user)
-    if(user===undefined){
+    
+    if(user.length===0){
       user = await Users.create({
         userName : 'AI',
         password : 'dummy-password'
       });
+      logger.log(user)
     }
     
     new Singleton().getAIInstance().setId(user[0]._id)
   } catch (error) {
-    console.log(error)
+    logger.log(error)
   }
   
   /**
@@ -51,7 +53,7 @@ const { Singleton } = require('../ai_id');
 
   io.on("connection", (socket) => {
     // ...
-    console.log('connected')
+    logger.log('connected')
     socket.on("join-room",(args)=>socket.join(args.roomId))
     socket.on("move",(args)=>{
       let move = args.move;
@@ -78,7 +80,7 @@ const { Singleton } = require('../ai_id');
    * Listen on provided port, on all network interfaces.
    */
   
-  server.listen(port,()=>console.log(port));
+  server.listen(port,()=>logger.log(port));
   server.on('error', onError);
   server.on('listening', onListening);
   
@@ -118,11 +120,11 @@ const { Singleton } = require('../ai_id');
     // handle specific listen errors with friendly messages
     switch (error.code) {
       case 'EACCES':
-        console.error(bind + ' requires elevated privileges');
+        logger.error(bind + ' requires elevated privileges');
         process.exit(1);
         break;
       case 'EADDRINUSE':
-        console.error(bind + ' is already in use');
+        logger.error(bind + ' is already in use');
         process.exit(1);
         break;
       default:

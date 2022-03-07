@@ -1,15 +1,14 @@
 import jwtDecode from "jwt-decode";
 import React from "react";
-import { useNavigate, useParams } from "react-router";
+import { Navigate,useNavigate,useParams } from "react-router";
 import Game from "./game";
-import { getGame, getSocket } from "./tools/urls";
+import { getGame } from "./tools/urls";
 
 const GameWrapper = (props) =>{
-    const socket = getSocket();
     const {token} = props;
     const {gameId} = useParams();
     const history = useNavigate();
-    
+    const [error,setError] = React.useState(false)
     const [game,setGame] = React.useState({});
     const [loading,setLoading] = React.useState(true);
     const [gameWithAI,setgameWithAI] = React.useState(false);
@@ -31,7 +30,7 @@ const GameWrapper = (props) =>{
                     setgameWithAI(true);
                 }
             } else{
-                history('/home');
+                setError(true)
             }
             setLoading(false)
         })
@@ -39,17 +38,23 @@ const GameWrapper = (props) =>{
             setLoading(false)
             window.alert(error)
             console.log(error)
-            history('/home');
+            setError(true)
         })
-        return ()=>{
-            socket.disconnect()
-        }
         // eslint-disable-next-line react-hooks/exhaustive-deps
     },[])
+
     if(loading===true){
         return <div>Loading...</div>
     }
-    return <Game game={game} socket={socket} token={token} history={history} gameWithAI={gameWithAI}/>
+
+    if(error===true){
+        return <Navigate to='/home'/>
+    }
+
+    return <Game game={game} 
+                token={token} 
+                history={history} 
+                gameWithAI={gameWithAI}/>
 }
 
 export default GameWrapper;

@@ -7,7 +7,7 @@ import {isinCheck,isCheckmated} from './util';
 import './App.css'
 import Timer from "./timer";
 import jwtDecode from "jwt-decode";
-import {  getMovefromAI,updateGameMoves } from "./tools/urls";
+import {  getMovefromAI,getSocket,updateGameMoves } from "./tools/urls";
 
 function getBoard(){
   const board = [];
@@ -28,8 +28,9 @@ function getBoard(){
   return board;
 }
 
-const Game = ({game,socket,token,history,gameWithAI})=>{
+const Game = ({game,token,history,gameWithAI})=>{
     const user_id = jwtDecode(token)._id;
+    const socket = gameWithAI===false ? getSocket() : null;
     const initialTurn = user_id===game.participant1._id ? game.initialTurn : (
         game.initialTurn==='white' ? 'black' : 'white'
     );
@@ -49,7 +50,6 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
 
         updateGameMoves(game._id,resultData,token).then(
             response=>{
-                console.log(response)
                 if(gameWithAI===false && emit===true)
                     socket.emit("abandon",{room : game._id,result:result});
                 history('/home');
@@ -123,10 +123,13 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
                 } 
                 
                 let piece = positions[id]===undefined ? null : positions[id];
-                playMove(flag,selectedLocation,id,piece===null ? piece : piece.getId());
-                setTurn(initialTurn==='white' ? 'black' : 'white');
-                checkGameOver(turn)
 
+                if(flag!==0){
+                    playMove(flag,selectedLocation,id,piece===null ? piece : piece.getId());
+                    setTurn(initialTurn==='white' ? 'black' : 'white');
+                    checkGameOver(turn)
+                }
+                
                 if(flag!==0 && gameWithAI===false){
                     socket.emit("move",{
                         move : [selectedLocation,id,initialTurn,piece===null ? piece : piece.getId()],
@@ -178,18 +181,44 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
         // eslint-disable-next-line react-hooks/exhaustive-deps
     }
 
+    const onEmitMoveHandler = (args)=>{
+        if(initialTurn!==args.move[2]){
+            let selectedLocation = args.move[0];
+            let id = args.move[1]
+            const type = positions[selectedLocation].getType();
+            if(type==='king'){
+                if(positions[selectedLocation].moved===false){
+                    let castling_positions = positions[selectedLocation].checkCastling(id,selectedLocation,{...positions});
+                    if(castling_positions.rookPos===null || castling_positions.newRookPos===null){
+                        //play two turns
+                        playMove(1,selectedLocation,id,null);
+                        playMove(1,castling_positions.newRookPos,castling_positions.rookPos,null);
+                    }
+                }
+               return;
+            }
+
+            let flag = args.flag;
+            if(flag!==0){
+                if(type==='king' || type==='rook'){
+                    positions[selectedLocation].setMoved();
+                }
+                if(type==='pawn'){
+                    positions[selectedLocation].promote(turn,initialTurn,id)
+                }
+                let piece = args.move[3]!==null ? initialPositions.mappedObject(args.move[3]) : args.move[3];
+                playMove(flag,selectedLocation,id,piece===null ? piece : piece.getId());
+                setTurn(initialTurn);
+                checkGameOver(turn)
+            } 
+        }
+    }
+
     const registerSocketListeners = ()=>{
         socket.on("connect", () => {
             console.log(socket.id); // x8WIv7-mJelg7on_ALbx
             socket.emit("join-room",{roomId : game._id});
-            socket.on("move",function(args){
-                if(initialTurn!==args.move[2]){
-                    let selectedLocation = args.move[0];
-                    let id = args.move[1]
-                    playMove(args.flag,selectedLocation,id,args.move[3]);
-                    setTurn(initialTurn);
-                }
-            })
+            socket.on("move",(args)=>onEmitMoveHandler(args))
             socket.on("disconnect", () =>console.log(socket.id));
             socket.on("undo",()=>undoHandler())
             socket.on("abandon",(args)=>quitGame(args.result,false))
@@ -198,6 +227,7 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
         window.addEventListener('beforeunload',()=>quitGame('ab',true))
         
         return ()=>{
+            socket.disconnect()
             socket.off("move",()=>console.log("move listener removed"))
             socket.off("undo",()=>console.log("undo listener removed"))
             socket.off("abandon",()=>console.log("abandon listener removed"))
@@ -225,6 +255,7 @@ const Game = ({game,socket,token,history,gameWithAI})=>{
         } else{
             getFromAI()
         }
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     },getDependencyArray())
     
     const checkGameOver = (turn)=>{
@@ -440,7 +471,7 @@ const styles = {
         margin : 10
     },
     moveList : {
-        maxHeight : '520px',
+        maxHeight : '500px',
         overflow : 'auto'
     },
     timer : {

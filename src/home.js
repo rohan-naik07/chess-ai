@@ -3,7 +3,7 @@ import React from "react";
 import { Navigate, useNavigate } from "react-router";
 import Dialog from "./dialog";
 import image from './pieces/ChessPiecesArray.png';
-import { getUserGames,deleteGame } from "./tools/urls";
+import { getUserGames,deleteGame,getUsers } from "./tools/urls";
 
 const styles = {
     top : {
@@ -29,15 +29,24 @@ const styles = {
         borderRadius : 10,
         backgroundColor : 'brown',
         padding : 10,
+        border: 'solid #000',
+        borderWidth: '1px',
         color : 'white',
         margin : 10,
         fontSize : 20
+    },
+    statsButton : {
+        borderRadius : 10,
+        padding : 5,
+        color : 'white',
+        fontSize : 15
     },
 }
 
 const Home = (props)=>{
     const [userGames,setUserGames] = React.useState([]);
-    const [showDialog,setShowDialog] = React.useState(false);
+    const [onlineUsers,setOnlineUsers] = React.useState([]);
+    const [userName,setUserName] = React.useState("")
     const {token,setToken} = props
     const user_id = jwtDecode(token)._id
     const history = useNavigate()
@@ -102,7 +111,7 @@ const Home = (props)=>{
     const renderGame = (game)=>(
         <div key={game._id}  style={{
             margin:10,
-            backgroundColor : 'grey',
+            backgroundColor : '#c8cfca',
             overflow:'hidden',
             borderRadius : 10
         }}>
@@ -136,7 +145,7 @@ const Home = (props)=>{
                 justifyContent : 'space-between'
             }}>
                 <div><button style={styles.button} onClick={()=>deleteGameHandler(game._id)}>Delete Game</button></div>
-                <div><button style={styles.button}>View Game</button></div>
+                <div><button style={styles.button} onClick={()=>history(`/view-game/?gameId=${game._id}&initialTurn=${game.initialTurn}`)}>View Game</button></div>
             </div>
         </div>
     )
@@ -149,19 +158,55 @@ const Home = (props)=>{
 
     React.useEffect(()=>{
         const id = jwtDecode(token)._id
-        getUserGames(id,token).then(response=>{
-            console.log(response)
-            setUserGames(response.data.message)
-        }).catch(error=>{
+        getUserGames(id,token).then(response=>setUserGames(response.data.message)).then(
+            ()=>{
+                getUsers(token).then(
+                    response=>{
+                        let users = response.data.message;
+                        setOnlineUsers(users.filter(user=>user._id!==user_id));
+                        setUserName(users.filter(user=>user._id===user_id)[0].userName)
+                    }
+                ).catch (error=>{
+                    console.log(error)
+                    window.alert("Failed to fetch users")
+                })
+            }
+        ).catch(error=>{
             console.error(error)
             window.alert("Failed to fetch user games")
         })
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     },[])
 
     if(token===null){
         return <Navigate to = '/'/>
     }
-    
+
+    const getStats = ()=>{
+        let total = userGames.length
+        let wonGames = userGames.filter(game=>(game.participant1._id===user_id && game.result===game.initialTurn)).length
+        let lostGames = userGames.filter(
+            game=>(
+                game.participant1._id===user_id &&
+                game.result!==game.initialTurn &&
+                game.result!=='ab'
+            )
+        ).length
+        
+        return (
+            <div style={{
+                display : 'flex',
+                alignItems : 'center',
+                justifyContent : 'space-between',
+                padding:5
+            }}>
+                <div style={{...styles.statsButton,backgroundColor:'grey'}}>{`${total} played`}</div>
+                <div  style={{...styles.statsButton,backgroundColor:'green'}}>{`${wonGames} won`}</div>
+                <div  style={{...styles.statsButton,backgroundColor:'red'}}>{`${lostGames} lost`}</div>
+            </div>
+        )
+    }
+
     return (
         <div className="home-root">
             <div style={styles.top}>
@@ -170,21 +215,17 @@ const Home = (props)=>{
             </div>
             <div className="home-sub-root">
                 <div style={styles.left}>
-                    <div><img width='300px' 
+                    <img width='300px' 
                         height='150px' 
-                        alt={`home-image`} 
-                        src={image}
-                    /></div>
-                    {
-                        showDialog===false ? 
-                        <React.Fragment>
-                            <div><button style={styles.button} onClick={()=>setShowDialog(true)}>Play!</button></div>
-                        </React.Fragment> : 
-                        <Dialog setShowDialog={setShowDialog} showDialog={showDialog}/>
-                    }
+                        alt={`home-image-array`} 
+                        src={image}/>
+                    <Dialog onlineUsers={onlineUsers} setOnlineUsers={setOnlineUsers}/>
                 </div>
                 <div style={styles.right}>
-                    <div style={styles.button}><h3>Welcome User</h3></div>
+                    <div style={{...styles.button,backgroundColor : '#c8cfca',color : 'black'}}>
+                        <h3>{`${userName}`}</h3>
+                        {getStats()}
+                    </div>
                     {
                         userGames.length===0 ? 
                         <div style={{

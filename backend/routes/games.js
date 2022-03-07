@@ -1,3 +1,4 @@
+require('dotenv').config()
 var express = require('express');
 var jwt = require('express-jwt');
 const { Singleton } = require('../ai_id');
@@ -10,7 +11,7 @@ const logger = new Singleton().getloggerInstance()
 
 router.route(endpoints.BASE).get(
     verifyToken,
-    jwt({ secret: 'key', algorithms: ['HS256'] }),
+    jwt({ secret: process.env.jwt_key, algorithms: ['HS256'] }),
     function(req,res){
         let object = JSON.parse(req.query.body);
         games.create({
@@ -50,7 +51,7 @@ router.route(endpoints.GET_FROM_AI).post(
                     message: {
                         selectedLocation : answer[0],
                         id : answer[1],
-                        piece : positions[answer[1]]===undefined ? null : positions[answer[1]]
+                        piece : positions[answer[1]]===undefined ? null : positions[answer[1]].id
                     }
                 });
             }

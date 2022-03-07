@@ -1,3 +1,4 @@
+import jwtDecode from 'jwt-decode';
 import React from 'react';
 import { getGameId,getUsers } from "./tools/urls";
 
@@ -89,26 +90,13 @@ const styles = {
 }
 
 const Dialog = props =>{
-    const {setShowDialog,showDialog} = props
+    const {onlineUsers,setOnlineUsers} = props
     const token = localStorage.getItem('token')
-    const [onlineUsers,setOnlineUsers] = React.useState([]);
+    const user_id = jwtDecode(token)._id;
     const [url,setUrl] = React.useState(null);
     const [user,setUser] = React.useState(null);
     const [query,setQuery] = React.useState("");
     const [turn,setTurn] = React.useState(null);
-
-    React.useEffect(()=>{
-        if(showDialog===true){
-            getUsers(token).then(
-                response=>{
-                    setOnlineUsers(response.data.message)
-                }
-            ).catch (error=>{
-                console.log(error)
-                window.alert("Failed to fetch users")
-            })
-        }
-    },[showDialog])
 
     const onSubmit = async ()=>{
         if(token===null){
@@ -133,6 +121,10 @@ const Dialog = props =>{
     const onChangeText = (event)=>{
         event.preventDefault();
         setQuery(event.target.value)
+        if(event.target.value===''){
+            setOnlineUsers(onlineUsers);
+            return;
+        }
         setOnlineUsers(
             onlineUsers.filter(
                 user=>user.userName.toLowerCase().includes(event.target.value.toLowerCase())
@@ -143,7 +135,8 @@ const Dialog = props =>{
     const onRefresh = ()=>{
         getUsers(token).then(
             response=>{
-                setOnlineUsers(response.data.message)
+                let users = response.data.message;
+                setOnlineUsers(users.filter(user=>user._id!==user_id));
             }
         ).catch (error=>{
             console.log(error)
@@ -155,10 +148,7 @@ const Dialog = props =>{
         <div style={styles.root}>
             <div style={styles.header}>
                 <div><h3>Find users</h3></div>
-                <div>
-                    <button style={styles.button} onClick={onRefresh}>Refresh</button>
-                    <span style={{width : 10,color : 'white',margin:5}} onClick={()=>setShowDialog(false)}>&times;</span>
-                </div>
+                <button style={styles.button} onClick={onRefresh}>Refresh</button>
             </div>
             <div style={styles.users}>
                 <div style={styles.temp}>

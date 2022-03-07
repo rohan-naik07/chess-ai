@@ -1,7 +1,7 @@
 import axios from "axios"
 const { io } = require("socket.io-client");
 
-const BASE_URL = 'http://localhost:7000'
+const BASE_URL = 'https://frozen-bastion-55265.herokuapp.com'
 const LOGIN_URL = `${BASE_URL}/users/login`
 const REGISTER_URL = `${BASE_URL}/users/register`
 const GET_USERS_URL = `${BASE_URL}/users/`
