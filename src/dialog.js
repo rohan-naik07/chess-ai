@@ -1,5 +1,6 @@
 import jwtDecode from 'jwt-decode';
 import React from 'react';
+import { LoadingComponent } from './loading';
 import { getGameId,getUsers } from "./tools/urls";
 
 const styles = {
@@ -86,6 +87,13 @@ const styles = {
         padding : 10,
         color : 'black',
         fontSize : 10
+    },
+    turn : {
+        display:'flex',
+        overflow:'hidden',
+        borderRadius:10,
+        border: 'solid #000',
+        borderWidth: '1px'
     }
 }
 
@@ -96,6 +104,7 @@ const Dialog = props =>{
     const [url,setUrl] = React.useState(null);
     const [user,setUser] = React.useState(null);
     const [query,setQuery] = React.useState("");
+    const [loading,setLoading] = React.useState(false);
     const [turn,setTurn] = React.useState(null);
 
     const onSubmit = async ()=>{
@@ -105,14 +114,17 @@ const Dialog = props =>{
         if(turn===null){
             return;
         }
+        setLoading(true)
         const game = {
             "participant2" : user.userName==='AI' ? null : user._id ,
             "initialTurn" : turn,
         }
         try {
+            setLoading(false)
             const response = await getGameId(game,token);
             setUrl(`http://localhost:3000/game/${response.data.message}`)
         } catch (error) {
+            setLoading(false)
             console.log(error)
             window.alert("Failed to fetch game id")
         }
@@ -144,6 +156,7 @@ const Dialog = props =>{
         })
     }
 
+
     return (
         <div style={styles.root}>
             <div style={styles.header}>
@@ -173,13 +186,7 @@ const Dialog = props =>{
                         <div>
                             <p>Choose your turn...after discussion with your opponent ofcourse :)</p>
                             <br/>
-                            <div style={{
-                                display:'flex',
-                                overflow:'hidden',
-                                borderRadius:10,
-                                border: 'solid #000',
-                                borderWidth: '1px'
-                            }}>
+                            <div style={styles.turn}>
                                 <div style={{
                                     backgroundColor : turn==='white' ? 'grey' : 'white',
                                     width : '100%',
@@ -202,15 +209,19 @@ const Dialog = props =>{
                     </div>
                 }
             </div>
-            {url!==null ?
-                <div>
-                    <h5>Share the below link</h5>
-                    <br/>
-                    <div style={styles.link}>
-                        <h5>{url}</h5>
-                        <button style={styles.refresh} onClick={()=>navigator.clipboard.writeText(url)}>Copy</button>
-                    </div>
-                </div> : null}
+            {
+                url===null ? null :(
+                    loading===false  ?
+                    <div>
+                        <h5>Share the below link</h5>
+                        <br/>
+                        <div style={styles.link}>
+                            <h5>{url}</h5>
+                            <button style={styles.refresh} onClick={()=>navigator.clipboard.writeText(url)}>Copy</button>
+                        </div>
+                    </div> : <LoadingComponent message={'Creating a new game....'}/>
+                )
+            }
         </div>
     )
 }

@@ -124,6 +124,10 @@ const Game = ({game,token,history,gameWithAI})=>{
                 
                 let piece = positions[id]===undefined ? null : positions[id];
 
+                if(typeof(flag)==='string'){
+                    piece = positions[flag];
+                }
+
                 if(flag!==0){
                     playMove(flag,selectedLocation,id,piece===null ? piece : piece.getId());
                     setTurn(initialTurn==='white' ? 'black' : 'white');
@@ -185,28 +189,14 @@ const Game = ({game,token,history,gameWithAI})=>{
         if(initialTurn!==args.move[2]){
             let selectedLocation = args.move[0];
             let id = args.move[1]
-            const type = positions[selectedLocation].getType();
-            if(type==='king'){
-                if(positions[selectedLocation].moved===false){
-                    let castling_positions = positions[selectedLocation].checkCastling(id,selectedLocation,{...positions});
-                    if(castling_positions.rookPos===null || castling_positions.newRookPos===null){
-                        //play two turns
-                        playMove(1,selectedLocation,id,null);
-                        playMove(1,castling_positions.newRookPos,castling_positions.rookPos,null);
-                    }
-                }
-               return;
-            }
-
             let flag = args.flag;
+            let turn = args.move[2]
+        
             if(flag!==0){
-                if(type==='king' || type==='rook'){
-                    positions[selectedLocation].setMoved();
+                let piece = args.move[3]!==null ? initialPositions.mappedObject[args.move[3]] : args.move[3];
+                if(typeof(flag)==='string'){
+                    piece = positions[flag];
                 }
-                if(type==='pawn'){
-                    positions[selectedLocation].promote(turn,initialTurn,id)
-                }
-                let piece = args.move[3]!==null ? initialPositions.mappedObject(args.move[3]) : args.move[3];
                 playMove(flag,selectedLocation,id,piece===null ? piece : piece.getId());
                 setTurn(initialTurn);
                 checkGameOver(turn)
@@ -247,7 +237,7 @@ const Game = ({game,token,history,gameWithAI})=>{
         if(gameOver!==null){
             setTimeout(()=>{
                 quitGame(gameOver,true)
-            },2000)
+            },1000)
             return;
         }
         if(gameWithAI===false){

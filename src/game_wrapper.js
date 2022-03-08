@@ -2,6 +2,7 @@ import jwtDecode from "jwt-decode";
 import React from "react";
 import { Navigate,useNavigate,useParams } from "react-router";
 import Game from "./game";
+import {Loading} from "./loading";
 import { getGame } from "./tools/urls";
 
 const GameWrapper = (props) =>{
@@ -44,7 +45,7 @@ const GameWrapper = (props) =>{
     },[])
 
     if(loading===true){
-        return <div>Loading...</div>
+        return <Loading message={'Setting up game...'}/>
     }
 
     if(error===true){

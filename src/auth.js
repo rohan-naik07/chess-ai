@@ -3,6 +3,7 @@ import image from './pieces/ChessPiecesArray.png';
 import { registerUser, loginUser } from "./tools/urls";
 import { useNavigate } from 'react-router-dom';
 import { Navigate } from "react-router";
+import { LoadingComponent } from "./loading";
 
 const styles = {
     root : {
@@ -40,11 +41,13 @@ const Auth = (props)=>{
         password : '',
         confirm_password : ''
     });
+    const [loading,setLoading] = React.useState(false);
     const [isSignUp,setSignUp] = React.useState(false);
     const history = useNavigate();
 
     const onSubmit = async (event)=>{
         event.preventDefault();
+        setLoading(true)
         if(inputData.userName==='' || inputData.password===''){
             window.alert("Please put all the required values")
             return;
@@ -60,6 +63,7 @@ const Auth = (props)=>{
             }
             try {
                 const response = await registerUser(data)
+                setLoading(false)
                 if(response.data.token===undefined){
                     throw new Error(response.data.message)
                 }
@@ -67,11 +71,13 @@ const Auth = (props)=>{
                 setToken(response.data.token)
                 history('/home')
             } catch (error) {
+                setLoading(false)
                 window.alert(error)
             }
         } else {
             try {
                 const response = await loginUser(data)
+                setLoading(false)
                 if(response.data.token===undefined){
                     throw new Error(response.data.message)
                 }
@@ -80,6 +86,7 @@ const Auth = (props)=>{
                 setToken(response.data.token)
                 history('/home')
             } catch (error) {
+                setLoading(false)
                 window.alert(error)
             }
         }
@@ -140,7 +147,11 @@ const Auth = (props)=>{
             ) : null }
             <br/>
             <div style={styles.temp}> 
-                <button style={styles.sendButton} onClick={(e)=>onSubmit(e)}>{ isSignUp===true ? 'Sign Up' : 'Login'}</button>
+               {
+                   loading===false ? 
+                   <button style={styles.sendButton} onClick={(e)=>onSubmit(e)}>{ isSignUp===true ? 'Sign Up' : 'Login'}</button>
+                   : <LoadingComponent message={isSignUp===true ? 'Signing Up...' : 'Logging in...'}/>
+               }
             </div>
             <br/>
             <div onClick={()=>onClickh5()}>
