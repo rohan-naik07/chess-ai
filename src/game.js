@@ -62,14 +62,32 @@ const Game = ({game,token,history,gameWithAI})=>{
         )
     }
        
-    const playMove = (flag,selectedLocation,id,piece)=>{
+    const playMove = (flag,selectedLocation,id,piece,isPromoted,isCastled,rookPos,newRookPos)=>{
         if(flag!==0){
             setSelectedLocation(null);                
-            moves.push([selectedLocation,id,turn,piece])
+            moves.push({
+                from : selectedLocation,
+                to : id,
+                turn : turn,
+                captured : typeof(flag)==='string' ? flag : piece,
+                isPromoted : isPromoted,
+                isCastled : isCastled,
+                rookPos : rookPos,
+                newRookPos : newRookPos
+            }) 
             setMoves(moves);
             setPositions(prevPositions=>
                 {
                    let piece = prevPositions[selectedLocation]
+                   if(isCastled===true){
+                        return {
+                            ...prevPositions,
+                            [selectedLocation] : undefined,
+                            [id] : piece,
+                            [rookPos] : undefined,
+                            [newRookPos] : prevPositions[rookPos]
+                       }
+                   }
                    return {
                     ...prevPositions,
                     [selectedLocation] : undefined,
@@ -94,19 +112,24 @@ const Game = ({game,token,history,gameWithAI})=>{
         } else {
             setCheck(null);
         } 
+        
         if(selectedLocation!==null){
             const type = positions[selectedLocation].getType();
             if(positions[id]!==undefined && turn===positions[id].getColor()){
                 setSelectedLocation(id);
             } else {
-
+                let isCastled = false;
+                let rookPos = null;
+                let newRookPos =  null;
                 if(type==='king'){
                     if(positions[selectedLocation].moved===false){
                         let castling_positions = positions[selectedLocation].checkCastling(id,selectedLocation,{...positions});
-                        if(castling_positions.rookPos===null || castling_positions.newRookPos===null){
+                        if(castling_positions.rookPos!==null && castling_positions.newRookPos!==null){
                             //play two turns
-                            playMove(1,selectedLocation,id,null);
-                            playMove(1,castling_positions.newRookPos,castling_positions.rookPos,null);
+                            isCastled = true
+                            rookPos = castling_positions.rookPos;
+                            newRookPos = castling_positions.newRookPos;
+                            playMove(1,selectedLocation,id,null,false,true,rookPos,newRookPos);
                         }
                     }
                    return;
@@ -129,14 +152,32 @@ const Game = ({game,token,history,gameWithAI})=>{
                 }
 
                 if(flag!==0){
-                    playMove(flag,selectedLocation,id,piece===null ? piece : piece.getId());
+                    playMove(
+                        flag,
+                        selectedLocation,
+                        id,
+                        piece===null ? piece : piece.getId(),
+                        positions[selectedLocation].is_promoted,
+                        false,
+                        null,
+                        null
+                    );
                     setTurn(initialTurn==='white' ? 'black' : 'white');
                     checkGameOver(turn)
                 }
                 
                 if(flag!==0 && gameWithAI===false){
                     socket.emit("move",{
-                        move : [selectedLocation,id,initialTurn,piece===null ? piece : piece.getId()],
+                        move : {
+                            from : selectedLocation,
+                            to : id,
+                            turn : initialTurn,
+                            captured : piece===null ? piece : piece.getId(),
+                            isPromoted : positions[selectedLocation].is_promoted,
+                            isCastled : isCastled,
+                            newRookPos : newRookPos,
+                            rookPos : rookPos
+                        },
                         flag : flag,
                         room : game._id
                     })
@@ -172,7 +213,7 @@ const Game = ({game,token,history,gameWithAI})=>{
                 )
                 .then(response=>{
                     let move = response.data.message;
-                    playMove(1,move.selectedLocation,move.id,move.piece);
+                    playMove(1,move.selectedLocation,move.id,move.piece,false,false,null,null);
                     setTurn(initialTurn);
                     checkGameOver(turn)
                 })
@@ -186,21 +227,59 @@ const Game = ({game,token,history,gameWithAI})=>{
     }
 
     const onEmitMoveHandler = (args)=>{
-        if(initialTurn!==args.move[2]){
-            let selectedLocation = args.move[0];
-            let id = args.move[1]
-            let flag = args.flag;
-            let turn = args.move[2]
-        
-            if(flag!==0){
-                let piece = args.move[3]!==null ? initialPositions.mappedObject[args.move[3]] : args.move[3];
-                if(typeof(flag)==='string'){
-                    piece = positions[flag];
+        if(initialTurn!==args.turn){
+            let selectedLocation = args.move.from;
+            let id = args.move.to
+            let turn = args.move.turn
+            let flag = args.flag
+            moves.push(args.move) 
+            setPositions(prevPositions=>
+                {
+                   let piece = prevPositions[selectedLocation]
+                   const type = prevPositions[selectedLocation].getType();
+                   if(type==='king' || type==='rook'){
+                        piece.setMoved();
+                    }
+                    if(type==='pawn'){
+                        piece.promote(turn,initialTurn,id)
+                    }
+                    if(typeof(flag)==='string'){
+                        return {
+                            ...prevPositions,
+                            [selectedLocation] : undefined,
+                            [id] : piece,
+                            [flag] : undefined
+                        }
+                    }
+                    if(args.move.isCastled===true){
+                        moves.push({
+                            from : args.move.rookPos,
+                            to : args.move.newRookPos,
+                            turn : args.move.turn,
+                            captured : null,
+                            isCastled : true,
+                            isPromoted : false,
+                            newRookPos : args.move.newRookPos,
+                            rookPos : args.move.rookPos
+                        })
+                        return {
+                            ...prevPositions,
+                            [selectedLocation] : undefined,
+                            [id] : piece,
+                            [rookPos] : undefined,
+                            [newRookPos] : prevPositions[rookPos]
+                        }
+                    }
+                   return {
+                    ...prevPositions,
+                    [selectedLocation] : undefined,
+                    [id] : piece
+                   }
                 }
-                playMove(flag,selectedLocation,id,piece===null ? piece : piece.getId());
-                setTurn(initialTurn);
-                checkGameOver(turn)
-            } 
+            );
+            setMoves(moves);
+            setTurn(initialTurn);
+            checkGameOver(turn)
         }
     }
 
@@ -267,18 +346,27 @@ const Game = ({game,token,history,gameWithAI})=>{
         }
         setSelectedLocation(null)
         let move = moves[moves.length-1];
-        let selectedLocation = move[1];
-        let id = move[0];
+        let selectedLocation = move.to;
+        let id = move.from;
         setPositions(prevPositions=>
             {
                let piece = prevPositions[selectedLocation]
                if(piece.getType()==='pawn'){
                     piece.demote();
                 }
+                if(move.isCastled===true){
+                    return {
+                        ...prevPositions,
+                        [id] : piece,
+                        [selectedLocation] : move.captured!==null ?  initialPositions.mappedObject[move.captured] : undefined,
+                        [move.newRookPos] : undefined,
+                        [move.rookPos] : prevPositions[move.newRookPos]
+                    }
+                }
                return {
                 ...prevPositions,
                 [id] : piece,
-                [selectedLocation] : move[3]!==null ?  initialPositions.mappedObject[move[3]] : undefined
+                [selectedLocation] : move.captured!==null ?  initialPositions.mappedObject[move.captured] : undefined
                }
             }
         );
@@ -368,7 +456,7 @@ const Game = ({game,token,history,gameWithAI})=>{
             </div>
             <div style={styles.moveList}>
                 {moves.map((move,index)=>(
-                    <div style={styles.move} key={`${move[0]}->${move[1]}->${index}`}>
+                    <div style={styles.move} key={`${move.to}->${move.from}->${index}`}>
                         <div style={styles.moveItem}>
                             <div style={
                                 {
@@ -376,16 +464,21 @@ const Game = ({game,token,history,gameWithAI})=>{
                                     height:10,
                                     borderRadius : 50,
                                     margin : 5,
-                                    backgroundColor : move[2]
+                                    backgroundColor : move.turn
                                 }
                             }/>
-                            <p>{`${move[0]} -> ${move[1]}`}</p>
+                            <p>{`${move.from} -> ${move.to}`}</p>
                         </div>
-                        {move[3]===null ? null : (
+                        <div>
+                            <h5>{
+                                move.isCastled===true ? "castled" : (move.isPromoted===true ? "promotion" : null)
+                            }</h5>
+                        </div>
+                        {move.captured===null ? null : (
                             <div style={styles.destroyed_image}>
                             <img width='20px'
                                 height={'20px'}
-                                src = {initialPositions.mappedObject[move[3]].getImage()}
+                                src = {initialPositions.mappedObject[move.captured].getImage()}
                                 alt={'move'}/>
                             <p> captured</p>
                         </div>

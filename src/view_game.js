@@ -44,8 +44,8 @@ const ViewGame = ({token})=>{
     const nextHandler = ()=>{
         if(moveIndex+1<game.moves.length){
             let move = game.moves[moveIndex+1];
-            checkGameOver(move[2])
-            playMove(move[0],move[1],null)
+            checkGameOver(move.turn)
+            playMove(move.from,move.to,null)
             setMoveIndex(moveIndex+1)
         }
     }
@@ -53,8 +53,8 @@ const ViewGame = ({token})=>{
     const backHandler = ()=>{
         if(moveIndex-1>=0){
             let move = game.moves[moveIndex];
-            checkGameOver(move[2])
-            playMove(move[1],move[0],move[3])
+            checkGameOver(move.turn)
+            playMove(move.to,from,move.captured)
             setMoveIndex(moveIndex-1)
         }
     }
@@ -95,9 +95,8 @@ const ViewGame = ({token})=>{
         getGame(gameId,token).then(response=>{
             let game = {...response.data.message}
             setGame(game)
-            console.log(game.moves)
             setLoading(false)
-            playMove(game.moves[0][0],game.moves[0][1],null)
+            playMove(game.moves[0].from,game.moves[0].to,null)
         }).catch(error=>{
             setLoading(false)
             window.alert(error)
@@ -191,7 +190,7 @@ const ViewGame = ({token})=>{
                             ...styles.move,
                             backgroundColor : moveIndex===index ? 'grey' : '#c8cfca'
                         }
-                    } key={`${move[0]}->${move[1]}->${index}`}>
+                    } key={`${move.from}->${move.to}->${index}`}>
                         <div style={styles.moveItem}>
                             <div style={
                                 {
@@ -199,16 +198,21 @@ const ViewGame = ({token})=>{
                                     height:10,
                                     borderRadius : 50,
                                     margin : 5,
-                                    backgroundColor : move[2]
+                                    backgroundColor : move.turn
                                 }
                             }/>
-                            <p>{`${move[0]} -> ${move[1]}`}</p>
+                            <p>{`${move.from} -> ${move.to}`}</p>
                         </div>
-                        {move[3]===null ? null : (
+                        <div>
+                            <h5>{
+                                move.isCastled===true ? "castled" : (move.isPromoted===true ? "promotion" : null)
+                            }</h5>
+                        </div>
+                        {move.captured===null ? null : (
                             <div style={styles.destroyed_image}>
                             <img width='20px'
                                 height={'20px'}
-                                src = {initialPositions.mappedObject[move[3]].getImage()}
+                                src = {initialPositions.mappedObject[move.captured].getImage()}
                                 alt={'move'}/>
                             <p> captured</p>
                         </div>
