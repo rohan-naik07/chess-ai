@@ -62,7 +62,16 @@ const Game = ({game,token,history,gameWithAI})=>{
         )
     }
        
-    const playMove = (flag,selectedLocation,id,piece,isPromoted,isCastled,rookPos,newRookPos)=>{
+    const playMove = (
+        flag,
+        selectedLocation,
+        id,
+        piece,
+        isPromoted,
+        isCastled,
+        rookPos,
+        newRookPos
+    )=>{
         if(flag!==0){
             setSelectedLocation(null);                
             moves.push({
@@ -125,7 +134,6 @@ const Game = ({game,token,history,gameWithAI})=>{
                     if(positions[selectedLocation].moved===false){
                         let castling_positions = positions[selectedLocation].checkCastling(id,selectedLocation,{...positions});
                         if(castling_positions.rookPos!==null && castling_positions.newRookPos!==null){
-                            //play two turns
                             isCastled = true
                             rookPos = castling_positions.rookPos;
                             newRookPos = castling_positions.newRookPos;
@@ -227,7 +235,7 @@ const Game = ({game,token,history,gameWithAI})=>{
     }
 
     const onEmitMoveHandler = (args)=>{
-        if(initialTurn!==args.turn){
+        if(initialTurn!==args.move.turn){
             let selectedLocation = args.move.from;
             let id = args.move.to
             let turn = args.move.turn
@@ -266,8 +274,8 @@ const Game = ({game,token,history,gameWithAI})=>{
                             ...prevPositions,
                             [selectedLocation] : undefined,
                             [id] : piece,
-                            [rookPos] : undefined,
-                            [newRookPos] : prevPositions[rookPos]
+                            [args.move.rookPos] : undefined,
+                            [args.move.newRookPos] : prevPositions[args.move.rookPos]
                         }
                     }
                    return {
@@ -285,7 +293,6 @@ const Game = ({game,token,history,gameWithAI})=>{
 
     const registerSocketListeners = ()=>{
         socket.on("connect", () => {
-            console.log(socket.id); // x8WIv7-mJelg7on_ALbx
             socket.emit("join-room",{roomId : game._id});
             socket.on("move",(args)=>onEmitMoveHandler(args))
             socket.on("disconnect", () =>console.log(socket.id));

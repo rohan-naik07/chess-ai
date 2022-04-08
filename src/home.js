@@ -109,8 +109,7 @@ const Home = (props)=>{
 
     const deleteGameHandler = (gameId)=>{
         deleteGame(gameId,token).then(
-            response=>{
-                console.log(response)
+            ()=>{
                 setUserGames(userGames.filter(game=>game._id!==gameId))
             }
         ).catch(
@@ -241,7 +240,7 @@ const Home = (props)=>{
                         height='150px' 
                         alt={`home-image-array`} 
                         src={image}/>
-                    <Dialog onlineUsers={onlineUsers} setOnlineUsers={setOnlineUsers}/>
+                    <Dialog onlineUsers={onlineUsers}/>
                 </div>
                 <div style={styles.right}>
                     <div style={{...styles.button,backgroundColor : '#c8cfca',color : 'black'}}>

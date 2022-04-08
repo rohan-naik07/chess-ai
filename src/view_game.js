@@ -6,6 +6,7 @@ import { useNavigate,Navigate } from "react-router";
 import { getGame } from "./tools/urls";
 import jwtDecode from "jwt-decode";
 import { useSearchParams } from "react-router-dom";
+import { Loading } from "./loading";
 
 function getBoard(){
   const board = [];
@@ -43,7 +44,7 @@ const ViewGame = ({token})=>{
 
     const nextHandler = ()=>{
         if(moveIndex+1<game.moves.length){
-            let move = game.moves[moveIndex+1];
+            let move = game.moves[moveIndex+1][0];
             checkGameOver(move.turn)
             playMove(move.from,move.to,null)
             setMoveIndex(moveIndex+1)
@@ -52,9 +53,9 @@ const ViewGame = ({token})=>{
 
     const backHandler = ()=>{
         if(moveIndex-1>=0){
-            let move = game.moves[moveIndex];
+            let move = game.moves[moveIndex][0];
             checkGameOver(move.turn)
-            playMove(move.to,from,move.captured)
+            playMove(move.to,move.from,move.captured)
             setMoveIndex(moveIndex-1)
         }
     }
@@ -96,7 +97,7 @@ const ViewGame = ({token})=>{
             let game = {...response.data.message}
             setGame(game)
             setLoading(false)
-            playMove(game.moves[0].from,game.moves[0].to,null)
+            playMove(game.moves[0][0].from,game.moves[0][0].to,null)
         }).catch(error=>{
             setLoading(false)
             window.alert(error)
@@ -107,7 +108,7 @@ const ViewGame = ({token})=>{
     },[])
 
     if(loading===true){
-        return <div>Loading...</div>
+        return <Loading message={'Setting up game...'}/>
     }
 
     if(error===true){
@@ -190,7 +191,7 @@ const ViewGame = ({token})=>{
                             ...styles.move,
                             backgroundColor : moveIndex===index ? 'grey' : '#c8cfca'
                         }
-                    } key={`${move.from}->${move.to}->${index}`}>
+                    } key={`${move[0].from}->${move[0].to}->${index}`}>
                         <div style={styles.moveItem}>
                             <div style={
                                 {
@@ -198,21 +199,21 @@ const ViewGame = ({token})=>{
                                     height:10,
                                     borderRadius : 50,
                                     margin : 5,
-                                    backgroundColor : move.turn
+                                    backgroundColor : move[0].turn
                                 }
                             }/>
-                            <p>{`${move.from} -> ${move.to}`}</p>
+                            <p>{`${move[0].from} -> ${move[0].to}`}</p>
                         </div>
                         <div>
                             <h5>{
-                                move.isCastled===true ? "castled" : (move.isPromoted===true ? "promotion" : null)
+                                move[0].isCastled===true ? "castled" : (move[0].isPromoted===true ? "promotion" : null)
                             }</h5>
                         </div>
-                        {move.captured===null ? null : (
+                        {move[0].captured===null ? null : (
                             <div style={styles.destroyed_image}>
                             <img width='20px'
                                 height={'20px'}
-                                src = {initialPositions.mappedObject[move.captured].getImage()}
+                                src = {initialPositions.mappedObject[move[0].captured].getImage()}
                                 alt={'move'}/>
                             <p> captured</p>
                         </div>

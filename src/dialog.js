@@ -98,7 +98,8 @@ const styles = {
 }
 
 const Dialog = props =>{
-    const {onlineUsers,setOnlineUsers} = props
+    const {onlineUsers} = props
+    const [userList,setUsersList] = React.useState(onlineUsers);
     const token = localStorage.getItem('token')
     const user_id = jwtDecode(token)._id;
     const [url,setUrl] = React.useState(null);
@@ -134,11 +135,11 @@ const Dialog = props =>{
         event.preventDefault();
         setQuery(event.target.value)
         if(event.target.value===''){
-            setOnlineUsers(onlineUsers);
+            setUsersList(onlineUsers);
             return;
         }
-        setOnlineUsers(
-            onlineUsers.filter(
+        setUsersList(
+            userList.filter(
                 user=>user.userName.toLowerCase().includes(event.target.value.toLowerCase())
             )
         )
@@ -148,7 +149,7 @@ const Dialog = props =>{
         getUsers(token).then(
             response=>{
                 let users = response.data.message;
-                setOnlineUsers(users.filter(user=>user._id!==user_id));
+                setUsersList(users.filter(user=>user._id!==user_id));
             }
         ).catch (error=>{
             console.log(error)
@@ -173,7 +174,7 @@ const Dialog = props =>{
                         onChange={onChangeText}/>
                 </div>
                 { user===null ? <div style={styles.list}>{
-                    onlineUsers.map(users=>
+                    userList.map(users=>
                         <div style={users.userName==='AI' ? styles.AIlistItem : styles.listItem} key={users._id}>
                             <h4>{users.userName}</h4>
                             <div><button style={styles.refresh} onClick={()=>setUser(users)}>Select</button></div>
