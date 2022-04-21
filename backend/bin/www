@@ -46,7 +46,7 @@ const { Singleton } = require('../ai_id');
   var server = http.createServer(app);
   const io = new Server(server,{
     cors: {
-      origin: "http://localhost:3000"
+      origin: "https://thechessai.netlify.app"
     }
   });
 
