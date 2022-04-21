@@ -390,10 +390,8 @@ class King extends Piece{
             rookPos : rookPos
         }
     }
-}
 
-<<<<<<< HEAD
-class Knight extends Piece{
+
     checkValidMove = (id,selectedLocation,positions,turn)=>{
         if(id===undefined || id===null){
             return;
@@ -406,121 +404,6 @@ class Knight extends Piece{
         const newCol = Number(id.split('+')[1]);
         const row = Number(selectedLocation.split('+')[0]);
         const col = Number(selectedLocation.split('+')[1]);
-    
-        let moves={
-            [`${row+2}+${col+1}`] : true,
-            [`${row-2}+${col+1}`] : true,
-            [`${row+1}+${col+2}`] : true,
-            [`${row+1}+${col-2}`] : true,
-            [`${row+2}+${col-1}`] : true,
-            [`${row-2}+${col-1}`] : true,
-            [`${row-1}+${col+2}`] : true,
-            [`${row-1}+${col-2}`] : true,
-        }
-
-        if(checkConstraints([newRow,newCol]) && moves[`${newRow}+${newCol}`]===true){
-            if( positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
-                if(positions[id]!==undefined && positions[id].getColor()!==turn){
-                    return 2;
-                } else {
-                    return 1;
-                }
-            }
-        }
-        return 0;
-    }
-}
-
-class Rook extends Piece{
-    constructor(identifier,image,initialTurn){
-        super(identifier,image,initialTurn);
-        this.moved = false;
-    }
-
-    setMoved = ()=>this.moved = true;
-=======
->>>>>>> first
-
-    checkValidMove = (id,selectedLocation,positions,turn)=>{
-        if(id===undefined || id===null){
-            return;
-        }
-        if(positions[selectedLocation]===undefined){
-            return 0;
-        }
-<<<<<<< HEAD
-       
-=======
-        
->>>>>>> first
-        const newRow = Number(id.split('+')[0]);
-        const newCol = Number(id.split('+')[1]);
-        const row = Number(selectedLocation.split('+')[0]);
-        const col = Number(selectedLocation.split('+')[1]);
-<<<<<<< HEAD
-    
-        if(checkConstraints([newRow,newCol])){
-            let overlap = false;
-            let allowed = false;
-            if(newRow===row && newCol!==col){
-                overlap = checkRowOverlap(row,col,newCol,positions);
-                allowed = true;
-            }
-            if(newRow!==row && newCol===col){
-                overlap = checkColOverlap(col,row,newRow,positions);
-                allowed = true;
-            }
-            if(overlap===true || allowed ===false){
-                return 0;
-            }
-            if(positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
-                if(positions[id]!==undefined && positions[id].getColor()!==turn){
-                    return 2;
-                } else {
-                    return 1;
-                }
-            }   
-        }
-        return 0;
-    }
-}
-
-class Bishop extends Piece{
-    checkValidMove = (id,selectedLocation,positions,turn)=>{
-        if(id===undefined || id===null){
-            return;
-        }
-        if(positions[selectedLocation]===undefined){
-            return 0;
-        }
-       
-        const newRow = Number(id.split('+')[0]);
-        const newCol = Number(id.split('+')[1]);
-        const row = Number(selectedLocation.split('+')[0]);
-        const col = Number(selectedLocation.split('+')[1]);
-    
-        if(checkConstraints([newRow,newCol])){
-            let overlap = false;
-            let allowed = false;
-            if(newRow + newCol === row + col){
-                overlap = checkforwardDiagonalOverlap(row,col,newRow,newCol,positions);
-                allowed = true;
-            }
-            if(newRow - newCol + 7 === row - col + 7){
-                overlap = checkbackwardDiagonalOverlap(row,col,newRow,newCol,positions);
-                allowed = true;
-            }
-            if(overlap===true || allowed ===false){
-                return 0;
-            }
-            if(positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
-                if(positions[id]!==undefined && positions[id].getColor()!==turn){
-                    return 2;
-                } else {
-                    return 1;
-                }
-            }   
-=======
 
         let square={
             [`${row+1}+${col}`] : true,
@@ -537,14 +420,11 @@ class Bishop extends Piece{
             if( positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
                 return 1;
             }
->>>>>>> first
         }
         return 0;
     }
 }
 
-<<<<<<< HEAD
-=======
 class Knight extends Piece{
     checkValidMove = (id,selectedLocation,positions,turn)=>{
         if(id===undefined || id===null){
@@ -658,7 +538,6 @@ class Bishop extends Piece{
     }
 }
 
->>>>>>> first
 export {
     King,Queen,Rook,Bishop,Pawn,Knight
 }
