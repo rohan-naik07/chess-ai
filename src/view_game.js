@@ -28,7 +28,9 @@ function getBoard(){
 }
 
 const ViewGame = ({token})=>{
+    /* eslint-disable no-unused-vars */
     const [searchParams, setSearchParams] = useSearchParams();
+    /* eslint-enable no-unused-vars */
     let gameId = searchParams.get('gameId')
     let initialTurn = searchParams.get('initialTurn')
     const user_id = jwtDecode(token)._id;

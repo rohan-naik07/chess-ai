@@ -238,7 +238,7 @@ const Home = (props)=>{
                 <div style={styles.left}>
                     <img width='300px' 
                         height='150px' 
-                        alt={`home-image-array`} 
+                        alt={`home-array`} 
                         src={image}/>
                     <Dialog onlineUsers={onlineUsers}/>
                 </div>
