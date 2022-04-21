@@ -123,7 +123,7 @@ const Dialog = props =>{
         try {
             setLoading(false)
             const response = await getGameId(game,token);
-            setUrl(`http://localhost:3000/game/${response.data.message}`)
+            setUrl(`https://thechessai.netlify.app/game/${response.data.message}`)
         } catch (error) {
             setLoading(false)
             console.log(error)
