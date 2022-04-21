@@ -1,6 +1,10 @@
 import React from "react";
 import image from './pieces/ChessPiecesArray.png';
-import Game from './game'
+import { registerUser, loginUser } from "./tools/urls";
+import { useNavigate } from 'react-router-dom';
+import { Navigate } from "react-router";
+import { LoadingComponent } from "./loading";
+
 const styles = {
     root : {
         position : 'fixed',
@@ -30,22 +34,68 @@ const styles = {
     text : {color:'white',textAlign:'center'}
 }
 
-const Auth = ()=>{
+const Auth = (props)=>{
+    const {token,setToken} = props
     const [inputData,setInputData] = React.useState({
-        name : '',
-        initialTurn : ''
+        userName : '',
+        password : '',
+        confirm_password : ''
     });
-    const [display,setDisplay] = React.useState(0);
-    const onSubmit = (event)=>{
+    const [loading,setLoading] = React.useState(false);
+    const [isSignUp,setSignUp] = React.useState(false);
+    const history = useNavigate();
+
+    const onSubmit = async (event)=>{
         event.preventDefault();
-        if(inputData.name==='' || inputData.initialTurn===''){
+        setLoading(true)
+        if(inputData.userName==='' || inputData.password===''){
+            window.alert("Please put all the required values")
             return;
         }
-        setDisplay(1);
+        let data = {
+            userName: inputData.userName,
+            password : inputData.password
+        }
+        if(isSignUp===true){
+            if(inputData.password!==inputData.confirm_password){
+                window.alert("Passwords do not match")
+                return;
+            }
+            try {
+                const response = await registerUser(data)
+                setLoading(false)
+                if(response.data.token===undefined){
+                    throw new Error(response.data.message)
+                }
+                localStorage.setItem('token',response.data.token)
+                setToken(response.data.token)
+                history('/home')
+            } catch (error) {
+                setLoading(false)
+                window.alert(error)
+            }
+        } else {
+            try {
+                const response = await loginUser(data)
+                setLoading(false)
+                if(response.data.token===undefined){
+                    throw new Error(response.data.message)
+                }
+                console.log(response)
+                localStorage.setItem('token',response.data.token)
+                setToken(response.data.token)
+                history('/home')
+            } catch (error) {
+                setLoading(false)
+                window.alert(error)
+            }
+        }
     }
+
+    const onClickh5 = ()=>setSignUp(!isSignUp)
     
-    if(display===1){
-        return <Game initialTurn={inputData.initialTurn} name={inputData.name} setDisplay={setDisplay}/>
+    if(token){
+        return <Navigate to='/home'/>
     }
 
     return (
@@ -60,50 +110,53 @@ const Auth = ()=>{
             <br/>
             <div style={styles.temp}>
                 <input type='text' 
-                    placeholder='Enter Your Name' 
+                    placeholder='Enter User Name' 
                     name='name'
                     style={styles.textField} 
-                    value={inputData.name}
+                    value={inputData.userName}
                     onChange={(event)=>setInputData({
                         ...inputData,
-                        name : event.target.value
+                        userName : event.target.value
                     })}/>
             </div>
             <br/>
-            <h4>Select your Side</h4>
-            <div style={{
-                ...styles.temp,
-                justifyContent : 'center',
-                display : 'flex'
-            }}>
-                <div style={styles.temp}> 
-                    <button style={{
-                         margin:10,
-                         padding:10,
-                         borderRadius : 10,
-                         backgroundColor: inputData.initialTurn==='white' ?  'yellow'  : 'white',
-                         color:'black'
-                    }} 
-                        onClick={()=>setInputData({
-                            ...inputData,
-                            initialTurn : 'white'
-                        })}>White</button>
-                </div>
-                <div style={styles.temp}> 
-                    <button style={{
-                        margin:10,
-                        padding:10,
-                        borderRadius : 10,
-                        backgroundColor: inputData.initialTurn==='black' ? 'yellow'  : 'black',
-                        color:'white'
-                    }} 
-                        onClick={()=>setInputData({
-                            ...inputData,
-                            initialTurn : 'black'
-                        })}>Black</button>
-                </div>    
+            <div style={styles.temp}>
+                <input type='password' 
+                    placeholder='Enter Password' 
+                    name='password'
+                    style={styles.textField} 
+                    value={inputData.password}
+                    onChange={(event)=>setInputData({
+                        ...inputData,
+                        password : event.target.value
+                    })}/>
             </div>
-            <div style={styles.temp}> <button style={styles.sendButton} onClick={(e)=>onSubmit(e)}>Play</button></div>  
+            <br/>
+            { isSignUp===true ? (
+                <div style={styles.temp}>
+                    <input type='password' 
+                        placeholder='Reenter Password' 
+                        name='confirm_password'
+                        style={styles.textField} 
+                        value={inputData.confirm_password}
+                        onChange={(event)=>setInputData({
+                            ...inputData,
+                            confirm_password : event.target.value
+                        })}/>
+                </div>
+            ) : null }
+            <br/>
+            <div style={styles.temp}> 
+               {
+                   loading===false ? 
+                   <button style={styles.sendButton} onClick={(e)=>onSubmit(e)}>{ isSignUp===true ? 'Sign Up' : 'Login'}</button>
+                   : <LoadingComponent message={isSignUp===true ? 'Signing Up...' : 'Logging in...'}/>
+               }
+            </div>
+            <br/>
+            <div onClick={()=>onClickh5()}>
+                <h5 style={styles.text}>{ isSignUp===true ? 'Sign In if already registered' : 'Create an account'}</h5>
+            </div>  
         </div>
     );
 }

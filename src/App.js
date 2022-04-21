@@ -1,14 +1,12 @@
 import React from 'react';
+import Router  from './tools/router';
 import './App.css';
-import Auth from './auth';
 
 function App() {
-  React.useEffect(()=>{
-    document.title = "Chess.ai"
-  },[])
+  const [token,setToken] = React.useState(localStorage.getItem('token'))
   return (
     <div className="App">
-      <Auth/>
+      <Router token={token} setToken={setToken}/>
     </div>
   );
 }

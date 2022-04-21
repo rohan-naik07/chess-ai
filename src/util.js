@@ -99,12 +99,13 @@ export const isinCheck = (turn,positions)=>{
     let kingPosition = null;
     let flag = false;
     Object.keys(positions).forEach(position=>{
-        if(positions[position].getColor()!==turn && positions[position].getType()==='king'){
+        if(positions[position]!==undefined && positions[position].getColor()!==turn && positions[position].getType()==='king'){
             kingPosition = position;
         }
     })
     Object.keys(positions).forEach(position=>{
         if(
+            positions[position]!==undefined &&
             positions[position].getColor()===turn && 
             positions[position].checkValidMove(kingPosition,position,positions,turn)>0
         ){
@@ -151,12 +152,10 @@ class Piece {
         this.color = identifier.substring(0,5);
         this.type = identifier.substring(6);
         this.initialTurn = initialTurn;
-        this.destroyed = false;
     }
 
     setImage = (image)=>this.image=image;
     setId = (identifier)=>this.identifier = identifier;
-    setDestroyed = (destroyed) => this.destroyed = destroyed;
     getImage = ()=>{return this.image}
     getId = ()=>{return this.identifier}
     getColor = ()=>{return this.color}
@@ -267,7 +266,7 @@ class Pawn extends Piece{
         if(attackMoves[`${newRow}+${newCol}`]===true){
             if(checkConstraints([newRow,newCol])){
                 if(positions[id]!==undefined && positions[id].getColor()!==turn){
-                    return 2;
+                    return 1;
                 } else {
                     if(positions[`${row}+${col-1}`]!==undefined && positions[`${row}+${col-1}`].canbeAttackedpassant===true){
                         positions[`${row}+${col-1}`].canbeAttackedpassant=false;
@@ -329,11 +328,7 @@ class Queen extends Piece{
                 return 0;
             }
             if(positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
-                if(positions[id]!==undefined && positions[id].getColor()!==turn){
-                    return 2;
-                } else {
-                    return 1;
-                }
+                return 1;
             }   
         }
         return 0;
@@ -395,45 +390,9 @@ class King extends Piece{
             rookPos : rookPos
         }
     }
-
-
-    checkValidMove = (id,selectedLocation,positions,turn)=>{
-        if(id===undefined || id===null){
-            return;
-        }
-        if(positions[selectedLocation]===undefined){
-            return 0;
-        }
-        
-        const newRow = Number(id.split('+')[0]);
-        const newCol = Number(id.split('+')[1]);
-        const row = Number(selectedLocation.split('+')[0]);
-        const col = Number(selectedLocation.split('+')[1]);
-
-        let square={
-            [`${row+1}+${col}`] : true,
-            [`${row-1}+${col}`] : true,
-            [`${row}+${col+1}`] : true,
-            [`${row}+${col-1}`] : true,
-            [`${row+1}+${col+1}`] : true,
-            [`${row+1}+${col-1}`] : true,
-            [`${row-1}+${col+1}`] : true,
-            [`${row-1}+${col-1}`] : true,
-        }
-        
-        if(checkConstraints([newRow,newCol]) && square[`${newRow}+${newCol}`]===true){
-            if( positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
-                if(positions[id]!==undefined && positions[id].getColor()!==turn){
-                    return 2;
-                } else {
-                    return 1;
-                }
-            }
-        }
-        return 0;
-    }
 }
 
+<<<<<<< HEAD
 class Knight extends Piece{
     checkValidMove = (id,selectedLocation,positions,turn)=>{
         if(id===undefined || id===null){
@@ -479,6 +438,8 @@ class Rook extends Piece{
     }
 
     setMoved = ()=>this.moved = true;
+=======
+>>>>>>> first
 
     checkValidMove = (id,selectedLocation,positions,turn)=>{
         if(id===undefined || id===null){
@@ -487,11 +448,16 @@ class Rook extends Piece{
         if(positions[selectedLocation]===undefined){
             return 0;
         }
+<<<<<<< HEAD
        
+=======
+        
+>>>>>>> first
         const newRow = Number(id.split('+')[0]);
         const newCol = Number(id.split('+')[1]);
         const row = Number(selectedLocation.split('+')[0]);
         const col = Number(selectedLocation.split('+')[1]);
+<<<<<<< HEAD
     
         if(checkConstraints([newRow,newCol])){
             let overlap = false;
@@ -554,11 +520,145 @@ class Bishop extends Piece{
                     return 1;
                 }
             }   
+=======
+
+        let square={
+            [`${row+1}+${col}`] : true,
+            [`${row-1}+${col}`] : true,
+            [`${row}+${col+1}`] : true,
+            [`${row}+${col-1}`] : true,
+            [`${row+1}+${col+1}`] : true,
+            [`${row+1}+${col-1}`] : true,
+            [`${row-1}+${col+1}`] : true,
+            [`${row-1}+${col-1}`] : true,
+        }
+        
+        if(checkConstraints([newRow,newCol]) && square[`${newRow}+${newCol}`]===true){
+            if( positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
+                return 1;
+            }
+>>>>>>> first
         }
         return 0;
     }
 }
 
+<<<<<<< HEAD
+=======
+class Knight extends Piece{
+    checkValidMove = (id,selectedLocation,positions,turn)=>{
+        if(id===undefined || id===null){
+            return;
+        }
+        if(positions[selectedLocation]===undefined){
+            return 0;
+        }
+        
+        const newRow = Number(id.split('+')[0]);
+        const newCol = Number(id.split('+')[1]);
+        const row = Number(selectedLocation.split('+')[0]);
+        const col = Number(selectedLocation.split('+')[1]);
+    
+        let moves={
+            [`${row+2}+${col+1}`] : true,
+            [`${row-2}+${col+1}`] : true,
+            [`${row+1}+${col+2}`] : true,
+            [`${row+1}+${col-2}`] : true,
+            [`${row+2}+${col-1}`] : true,
+            [`${row-2}+${col-1}`] : true,
+            [`${row-1}+${col+2}`] : true,
+            [`${row-1}+${col-2}`] : true,
+        }
+
+        if(checkConstraints([newRow,newCol]) && moves[`${newRow}+${newCol}`]===true){
+            if( positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
+                return 1;
+            }
+        }
+        return 0;
+    }
+}
+
+class Rook extends Piece{
+    constructor(identifier,image,initialTurn){
+        super(identifier,image,initialTurn);
+        this.moved = false;
+    }
+
+    setMoved = ()=>this.moved = true;
+
+    checkValidMove = (id,selectedLocation,positions,turn)=>{
+        if(id===undefined || id===null){
+            return;
+        }
+        if(positions[selectedLocation]===undefined){
+            return 0;
+        }
+       
+        const newRow = Number(id.split('+')[0]);
+        const newCol = Number(id.split('+')[1]);
+        const row = Number(selectedLocation.split('+')[0]);
+        const col = Number(selectedLocation.split('+')[1]);
+    
+        if(checkConstraints([newRow,newCol])){
+            let overlap = false;
+            let allowed = false;
+            if(newRow===row && newCol!==col){
+                overlap = checkRowOverlap(row,col,newCol,positions);
+                allowed = true;
+            }
+            if(newRow!==row && newCol===col){
+                overlap = checkColOverlap(col,row,newRow,positions);
+                allowed = true;
+            }
+            if(overlap===true || allowed ===false){
+                return 0;
+            }
+            if(positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
+                return 1;
+            }   
+        }
+        return 0;
+    }
+}
+
+class Bishop extends Piece{
+    checkValidMove = (id,selectedLocation,positions,turn)=>{
+        if(id===undefined || id===null){
+            return;
+        }
+        if(positions[selectedLocation]===undefined){
+            return 0;
+        }
+       
+        const newRow = Number(id.split('+')[0]);
+        const newCol = Number(id.split('+')[1]);
+        const row = Number(selectedLocation.split('+')[0]);
+        const col = Number(selectedLocation.split('+')[1]);
+    
+        if(checkConstraints([newRow,newCol])){
+            let overlap = false;
+            let allowed = false;
+            if(newRow + newCol === row + col){
+                overlap = checkforwardDiagonalOverlap(row,col,newRow,newCol,positions);
+                allowed = true;
+            }
+            if(newRow - newCol + 7 === row - col + 7){
+                overlap = checkbackwardDiagonalOverlap(row,col,newRow,newCol,positions);
+                allowed = true;
+            }
+            if(overlap===true || allowed ===false){
+                return 0;
+            }
+            if(positions[id]===undefined || (positions[id]!==undefined && positions[id].getColor()!==turn)){
+                return 1;
+            }   
+        }
+        return 0;
+    }
+}
+
+>>>>>>> first
 export {
     King,Queen,Rook,Bishop,Pawn,Knight
 }

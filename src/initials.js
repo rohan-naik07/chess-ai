@@ -12,6 +12,32 @@ import pdt from './pieces/Chess_pdt60.png';
 import plt from './pieces/Chess_plt60.png';
 import {Queen,King,Pawn,Knight,Bishop,Rook} from './util';
 
+const getMappedObject = (object)=>{
+    let mappedObject = {}
+    Object.keys(object).forEach(
+        key=>{
+            mappedObject[object[key].getId()] = object[key];
+        }
+    )
+    return mappedObject;
+}
+
+export const getCompressedObject = (object)=>{
+    let compressedObject = {}
+    Object.keys(object).forEach(
+        key=>{
+            if(object[key]!==undefined){
+                compressedObject[key] = {
+                    id : object[key].getId(),
+                    color : object[key].getColor(),
+                    type : object[key].getType()
+                }
+            }
+        }
+    )
+    return compressedObject;
+}
+
 export const getInitialPositions = (initialTurn)=>{
     const initialPositionsWhite = {
         '0+0' : new Rook('black0rook',rdt,initialTurn),
@@ -82,5 +108,12 @@ export const getInitialPositions = (initialTurn)=>{
         '7+6' : new Knight('black1knight',ndt,initialTurn),
         '7+7' : new Rook('black1rook',rdt,initialTurn)
     }
-    return initialTurn==='white' ? {...initialPositionsWhite} : {...initialPositionsBlack}
+    
+    return initialTurn==='white' ? {
+        positions : {...initialPositionsWhite},
+        mappedObject : getMappedObject(initialPositionsWhite)
+    } : {
+        positions : {...initialPositionsBlack},
+        mappedObject : getMappedObject(initialPositionsBlack)
+    }
 }
