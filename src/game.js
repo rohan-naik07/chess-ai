@@ -47,19 +47,24 @@ const Game = ({game,token,history,gameWithAI})=>{
             moves : moves,
             result : result
         }
-
-        updateGameMoves(game._id,resultData,token).then(
-            response=>{
-                if(gameWithAI===false && emit===true)
-                    socket.emit("abandon",{room : game._id,result:result});
-                history('/home');
-            }
-        ).catch(
-            error=>{
-                console.log(error)
-                window.alert("failed to update game")
-            }
-        )
+        if(result==='ab'){
+            if(gameWithAI===false && emit===true)
+                socket.emit("abandon",{room : game._id,result:result});
+            history('/home');
+        } else {
+            updateGameMoves(game._id,resultData,token).then(
+                response=>{
+                    if(gameWithAI===false && emit===true)
+                        socket.emit("abandon",{room : game._id,result:result});
+                    history('/home');
+                }
+            ).catch(
+                error=>{
+                    console.log(error)
+                    window.alert("failed to update game")
+                }
+            )
+        }  
     }
        
     const playMove = (

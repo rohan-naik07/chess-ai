@@ -177,7 +177,21 @@ const Home = (props)=>{
     React.useEffect(()=>{
         const id = jwtDecode(token)._id
         setLoading(true)
-        getUserGames(id,token).then(response=>setUserGames(response.data.message)).then(
+        getUserGames(id,token).then(
+            async response=>{
+                let games = response.data.message;
+                for(let i=0;i<games.length;i++){
+                    if(i>=games.length){
+                        break;
+                    }
+                    if(games[i].result==='null' || games[i].result===undefined){
+                        await deleteGameHandler(games[i]._id)
+                        games.splice(i,1)
+                    }
+                }
+                setUserGames([...games])
+            }
+        ).then(
             ()=>{
                 getUsers(token).then(
                     response=>{
@@ -185,6 +199,7 @@ const Home = (props)=>{
                         let users = response.data.message;
                         setOnlineUsers(users.filter(user=>user._id!==user_id));
                         setUserName(users.filter(user=>user._id===user_id)[0].userName)
+
                     }
                 ).catch (error=>{
                     setLoading(false)
@@ -240,7 +255,9 @@ const Home = (props)=>{
                         height='150px' 
                         alt={`home-array`} 
                         src={image}/>
-                    <Dialog onlineUsers={onlineUsers}/>
+                    {
+                        onlineUsers.length > 0 ? <Dialog onlineUsers={onlineUsers}/> : null
+                    }
                 </div>
                 <div style={styles.right}>
                     <div style={{...styles.button,backgroundColor : '#c8cfca',color : 'black'}}>

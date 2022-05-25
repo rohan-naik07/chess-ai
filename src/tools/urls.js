@@ -5,7 +5,7 @@ const LOGIN_URL = `${BASE_URL}/users/login`
 const REGISTER_URL = `${BASE_URL}/users/register`
 const GET_USERS_URL = `${BASE_URL}/users/`
 const GET_GAME_URL = `${BASE_URL}/game/`
-const GET_AI_URL = `${BASE_URL}/game/ai`
+const GET_AI_URL = process.env.REACT_APP_AWS_URL
 const GAME_BASE_URL = `${BASE_URL}/game/user/`
 
 export const loginUser = (data)=>{
@@ -190,11 +190,10 @@ export const deleteGame = (gameId,token)=>{
     })
 }
 
-export const getMovefromAI = (data,token)=>{
+export const getMovefromAI = (data)=>{
     return new Promise((resolve,reject)=>{
         let config = {
             headers: { 
-                authorization: `Bearer ${token}`,
                 'Content-Type': 'application/json' 
             }
         };

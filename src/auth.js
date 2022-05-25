@@ -49,6 +49,7 @@ const Auth = (props)=>{
         event.preventDefault();
         setLoading(true)
         if(inputData.userName==='' || inputData.password===''){
+            setLoading(false)
             window.alert("Please put all the required values")
             return;
         }
@@ -58,6 +59,7 @@ const Auth = (props)=>{
         }
         if(isSignUp===true){
             if(inputData.password!==inputData.confirm_password){
+                setLoading(false)
                 window.alert("Passwords do not match")
                 return;
             }
@@ -81,7 +83,6 @@ const Auth = (props)=>{
                 if(response.data.token===undefined){
                     throw new Error(response.data.message)
                 }
-                console.log(response)
                 localStorage.setItem('token',response.data.token)
                 setToken(response.data.token)
                 history('/home')

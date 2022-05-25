@@ -19,8 +19,33 @@ h3,h2,h4,h5,h6,h1,p {
   height : 20px;
 }
 
+.home-chess-image:hover {
+  width: 40px;
+  height: 40px;
+}
+
+.home-chess-image {
+  width: 30px;
+  height: 30px;
+  transition: 0.5s;
+}
+
+.grid-container {
+  display: grid;
+  grid-gap: 20px;
+  grid-template-columns: auto auto;
+  padding: 10px;
+}
+
+.center-card {
+  position: absolute;
+  left: 130px;
+  top: 130px;
+  text-align: center;
+}
+
 /* For mobile phones: */
-@media only screen and (min-width: 600px) {
+@media only screen and (max-width: 600px) {
   /* For tablets: */
   .container {
     display: flex;
@@ -47,9 +72,22 @@ h3,h2,h4,h5,h6,h1,p {
     width : 30px;
     height : 30px;
   }
+  .grid-container {
+    display: grid;
+    grid-gap: 20px;
+    grid-template-columns: auto auto ;
+    padding: 10px;
+  }
+  
+  .center-card {
+    position: absolute;
+    left: 70px;
+    top: 100px;
+    text-align: center;
+  }
 }
 
-@media only screen and (min-width: 768px) {
+@media only screen and (min-width: 1250px) {
   /* For desktop: */
   .container {
     display: flex;
@@ -107,4 +145,43 @@ h3,h2,h4,h5,h6,h1,p {
 @keyframes spin {
   0% { transform: rotate(0deg); }
   100% { transform: rotate(360deg); }
+}
+
+.modal {
+  display: block; /* Hidden by default */
+  position: fixed; /* Stay in place */
+  z-index: 1; /* Sit on top */
+  padding-top: 100px; /* Location of the box */
+  left: 0;
+  top: 0;
+  width: 100%; /* Full width */
+  height: 100%; /* Full height */
+  overflow: auto; /* Enable scroll if needed */
+  background-color: rgb(0,0,0); /* Fallback color */
+  background-color: rgba(0,0,0,0.4); /* Black w/ opacity */
+}
+
+/* Modal Content */
+.modal-content {
+  background-color: #fefefe;
+  border-radius: 10px;
+  margin: auto;
+  text-align: center;
+  padding: 20px;
+  border: 1px solid #888;
+  width: 60%;
+}
+
+.close {
+  color: #aaaaaa;
+  float: right;
+  font-size: 28px;
+  font-weight: bold;
+}
+
+.close:hover,
+.close:focus {
+  color: #000;
+  text-decoration: none;
+  cursor: pointer;
 }

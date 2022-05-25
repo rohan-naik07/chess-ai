@@ -25,7 +25,7 @@ export const Loading = ({message})=>(
 )
 
 export const LoadingComponent = ({message})=>(
-    <div style={styles.root}>
+    <div style={styles.comp}>
         <div className="loader-small"></div>
         <div style={{width:'20px'}}/>
         <h3>{message}</h3>
