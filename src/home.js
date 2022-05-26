@@ -178,28 +178,23 @@ const Home = (props)=>{
         const id = jwtDecode(token)._id
         setLoading(true)
         getUserGames(id,token).then(
-            async response=>{
+            response=>{
                 let games = response.data.message;
-                for(let i=0;i<games.length;i++){
-                    if(i>=games.length){
-                        break;
-                    }
-                    if(games[i].result==='null' || games[i].result===undefined){
-                        await deleteGameHandler(games[i]._id)
-                        games.splice(i,1)
-                    }
-                }
-                setUserGames([...games])
-            }
-        ).then(
-            ()=>{
                 getUsers(token).then(
-                    response=>{
+                    async response=>{
                         setLoading(false)
                         let users = response.data.message;
                         setOnlineUsers(users.filter(user=>user._id!==user_id));
                         setUserName(users.filter(user=>user._id===user_id)[0].userName)
-
+                        let res_games = []
+                        for(let i=0;i<games.length;i++){
+                            if(games[i].result==='null' || games[i].result===undefined){
+                                await deleteGameHandler(games[i]._id)
+                            }else {
+                                res_games.push(games[i])
+                            }
+                        }
+                        setUserGames([...res_games])
                     }
                 ).catch (error=>{
                     setLoading(false)
@@ -265,7 +260,7 @@ const Home = (props)=>{
                         {getStats()}
                     </div>
                     {
-                        userGames.length===0 ? 
+                        userGames.length===0 && loading===false ? 
                         <div style={styles.no_games}>No games played as of now</div> 
                         : <React.Fragment>
                             {userGames.map(game=>renderGame(game))}
