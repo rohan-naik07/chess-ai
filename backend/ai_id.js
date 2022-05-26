@@ -2,10 +2,10 @@ class AIId{
     constructor(){
         this._id = null;
     }
-    setId = (id)=>{
+    setId (id) {
         this._id = id;
     }
-    getId = ()=>{
+    getId () {
         return this._id;
     }
 }

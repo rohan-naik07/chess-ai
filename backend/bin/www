@@ -3,151 +3,152 @@
 /**
  * Module dependencies.
  */
-require('dotenv').config()
-const { Singleton } = require('../ai_id');
-
-(async ()=>{
-  var app = require('../app');
-  var debug = require('debug')('backend:server');
-  var http = require('http');
-  const Users = require('../db').userModel;
-  const { Server } = require("socket.io");
-  const mongoose = require('mongoose')
-  const dbURL = process.env.db_URL;
-  const logger = new Singleton().getloggerInstance()
-  /**
-   * Get port from environment and store in Express.
-   */
-  
-  var port = normalizePort(process.env.PORT || '7000');
-  app.set('port', port);
-  try {
-    await mongoose.connect(dbURL);
-    //mongoose.connection.db.dropDatabase( function(err, result) {logger.log(result)});
-    let user = await Users.find({userName:'AI'});
-    
-    if(user.length===0){
-      user = await Users.create({
-        userName : 'AI',
-        password : 'dummy-password'
-      });
-      logger.log(user)
-    }
-    
-    new Singleton().getAIInstance().setId(user[0]._id)
-  } catch (error) {
-    logger.log(error)
-  }
-  
-  /**
-   * Create HTTP server.
-   */
-  
-  var server = http.createServer(app);
-  const io = new Server(server,{
-    cors: {
-      origin: "https://thechessai.netlify.app"
-    }
-  });
-
-
-  io.on("connection", (socket) => {
-    // ...
-    logger.log('connected')
-    socket.on("join-room",(args)=>socket.join(args.roomId))
-    socket.on("move",(args)=>{
-      let move = args.move;
-      let id  = args.move.to;
-      let selectedLocation = args.move.from;
-      let newRow = Number(id.split('+')[0]);
-      let newCol = Number(id.split('+')[1]);
-      let row = Number(selectedLocation.split('+')[0]);
-      let col = Number(selectedLocation.split('+')[1]);
-      
-      if(row!==newRow){
-        row = Math.abs(7-row);
-        newRow = Math.abs(7-newRow);
-      }
-
-      socket.to(args.room).emit("move",{
-        move : {
-          ...move,
-          from : `${row}+${col}`,
-          to : `${newRow}+${newCol}`,
-        },
-        flag : args.flag
-      })
-
-    })
-    socket.on("undo",(args)=>socket.to(args.room).emit("undo"))
-    socket.on("abandon",(args)=>socket.to(args.room).emit("abandon",args))
-  });
-  
-  /**
-   * Listen on provided port, on all network interfaces.
-   */
-  
-  server.listen(port,()=>logger.log(port));
-  server.on('error', onError);
-  server.on('listening', onListening);
-  
-  /**
-   * Normalize a port into a number, string, or false.
-   */
-  
-  function normalizePort(val) {
-    var port = parseInt(val, 10);
-  
-    if (isNaN(port)) {
-      // named pipe
-      return val;
-    }
-  
-    if (port >= 0) {
-      // port number
-      return port;
-    }
-  
-    return false;
-  }
-  
-  /**
-   * Event listener for HTTP server "error" event.
-   */
-  
-  function onError(error) {
-    if (error.syscall !== 'listen') {
-      throw error;
-    }
-  
-    var bind = typeof port === 'string'
-      ? 'Pipe ' + port
-      : 'Port ' + port;
-  
-    // handle specific listen errors with friendly messages
-    switch (error.code) {
-      case 'EACCES':
-        logger.error(bind + ' requires elevated privileges');
-        process.exit(1);
-        break;
-      case 'EADDRINUSE':
-        logger.error(bind + ' is already in use');
-        process.exit(1);
-        break;
-      default:
-        throw error;
-    }
-  }
-  
-  /**
-   * Event listener for HTTP server "listening" event.
-   */
-  
-  function onListening() {
-    var addr = server.address();
-    var bind = typeof addr === 'string'
-      ? 'pipe ' + addr
-      : 'port ' + addr.port;
-    debug('Listening on ' + bind);
-  }
-})();
+ require('dotenv').config()
+ const { Singleton } = require('../ai_id');
+ 
+ (async ()=>{
+   var app = require('../app');
+   var debug = require('debug')('backend:server');
+   var http = require('http');
+   const Users = require('../db').userModel;
+   const { Server } = require("socket.io");
+   const mongoose = require('mongoose')
+   const dbURL = process.env.db_URL;
+   const logger = new Singleton().getloggerInstance()
+   /**
+    * Get port from environment and store in Express.
+    */
+   
+   var port = normalizePort(process.env.PORT || '7000');
+   app.set('port', port);
+   try {
+     await mongoose.connect(dbURL);
+     //mongoose.connection.db.dropDatabase( function(err, result) {logger.log(result)});
+     let user = await Users.find({userName:'AI'});
+     
+     if(user.length===0){
+       user = await Users.create({
+         userName : 'AI',
+         password : 'dummy-password'
+       });
+       logger.log(user)
+     }
+     
+     new Singleton().getAIInstance().setId(user[0]._id)
+   } catch (error) {
+     logger.log(error)
+   }
+   
+   /**
+    * Create HTTP server.
+    */
+   
+   var server = http.createServer(app);
+   const io = new Server(server,{
+     cors: {
+       origin: "https://thechessai.netlify.app"
+     }
+   });
+ 
+ 
+   io.on("connection", (socket) => {
+     // ...
+     logger.log('connected')
+     socket.on("join-room",(args)=>socket.join(args.roomId))
+     socket.on("move",(args)=>{
+       let move = args.move;
+       let id  = args.move.to;
+       let selectedLocation = args.move.from;
+       let newRow = Number(id.split('+')[0]);
+       let newCol = Number(id.split('+')[1]);
+       let row = Number(selectedLocation.split('+')[0]);
+       let col = Number(selectedLocation.split('+')[1]);
+       
+       if(row!==newRow){
+         row = Math.abs(7-row);
+         newRow = Math.abs(7-newRow);
+       }
+ 
+       socket.to(args.room).emit("move",{
+         move : {
+           ...move,
+           from : `${row}+${col}`,
+           to : `${newRow}+${newCol}`,
+         },
+         flag : args.flag
+       })
+ 
+     })
+     socket.on("undo",(args)=>socket.to(args.room).emit("undo"))
+     socket.on("abandon",(args)=>socket.to(args.room).emit("abandon",args))
+   });
+   
+   /**
+    * Listen on provided port, on all network interfaces.
+    */
+   
+   server.listen(port,()=>logger.log(port));
+   server.on('error', onError);
+   server.on('listening', onListening);
+   
+   /**
+    * Normalize a port into a number, string, or false.
+    */
+   
+   function normalizePort(val) {
+     var port = parseInt(val, 10);
+   
+     if (isNaN(port)) {
+       // named pipe
+       return val;
+     }
+   
+     if (port >= 0) {
+       // port number
+       return port;
+     }
+   
+     return false;
+   }
+   
+   /**
+    * Event listener for HTTP server "error" event.
+    */
+   
+   function onError(error) {
+     if (error.syscall !== 'listen') {
+       throw error;
+     }
+   
+     var bind = typeof port === 'string'
+       ? 'Pipe ' + port
+       : 'Port ' + port;
+   
+     // handle specific listen errors with friendly messages
+     switch (error.code) {
+       case 'EACCES':
+         logger.error(bind + ' requires elevated privileges');
+         process.exit(1);
+         break;
+       case 'EADDRINUSE':
+         logger.error(bind + ' is already in use');
+         process.exit(1);
+         break;
+       default:
+         throw error;
+     }
+   }
+   
+   /**
+    * Event listener for HTTP server "listening" event.
+    */
+   
+   function onListening() {
+     var addr = server.address();
+     var bind = typeof addr === 'string'
+       ? 'pipe ' + addr
+       : 'port ' + addr.port;
+     debug('Listening on ' + bind);
+   }
+ })();
+ 

@@ -1,0 +1,64 @@
+version: '3.8'
+
+
+services:
+  server:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    image: myapp-server
+    container_name: myapp-node-server
+    command: npm start
+    volumes:
+      - ./backend/:/usr/src/app
+      - /usr/src/app/node_modules
+    ports:
+      - "7000:7000"
+    depends_on:
+      - mongo
+    env_file: ./backend/.env
+    environment:
+      - jwt_key=key
+      - db_URL=mongodb://localhost:27017/test
+    networks:
+      - app-network
+
+  mongo:
+    image: mongo
+    volumes:
+      - data-volume:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - app-network
+
+  client:
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    image: myapp-client
+    environment:
+      - REACT_APP_sURL=http://localhost:7000
+    ports:
+      - "3000:3000"
+    env_file:
+      - ./.env
+    container_name: myapp-react-client
+    command: npm start
+    volumes:
+      - ./:/usr/app
+      - /usr/app/node_modules
+    depends_on:
+      - server
+    networks:
+      - app-network
+
+networks:
+    app-network:
+        driver: bridge
+
+volumes:
+    data-volume:
+    node_modules:
+    web-root:
+      driver: local
