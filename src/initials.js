@@ -12,6 +12,7 @@ import pdt from './pieces/Chess_pdt60.png';
 import plt from './pieces/Chess_plt60.png';
 import {Queen,King,Pawn,Knight,Bishop,Rook} from './util';
 
+// id of object->object
 const getMappedObject = (object)=>{
     let mappedObject = {}
     Object.keys(object).forEach(
@@ -21,6 +22,14 @@ const getMappedObject = (object)=>{
     )
     return mappedObject;
 }
+
+/* location on board ->{
+        id
+        color
+        type
+    }
+    this is the representation of the board state which is sent to backend
+*/
 
 export const getCompressedObject = (object)=>{
     let compressedObject = {}

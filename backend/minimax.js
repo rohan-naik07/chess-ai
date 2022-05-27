@@ -1,274 +1,15 @@
-const checkConstraints = position=>(
-    position[0] >= 0 && position[0]<8 &&
-    position[1] >= 0 && position[1]<8 
-)
+const {checkValidMove} = require('./ai_utils');
 
-const checkRowOverlap = (common_row,col,newCol,positions)=>{
-    if(col < newCol){
-        for(let i=col+1;i<newCol;i++){
-            if(positions[`${common_row}+${i}`]!==undefined){
-                return true;
-            }
-        }
-    } else {
-        for(let i=col-1;i>newCol;i--){
-            if(positions[`${common_row}+${i}`]!==undefined){
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-const checkColOverlap = (common_col,row,newRow,positions)=>{
-    if(row < newRow){
-        for(let i=row+1;i<newRow;i++){
-            if(positions[`${i}+${common_col}`]!==undefined){
-                return true;
-            }
-        }
-    } else {
-        for(let i=row-1;i>newRow;i--){
-            if(positions[`${i}+${common_col}`]!==undefined){
-                return true;
-            }
-        }
-    }
-    return false;
-}
-
-const checkbackwardDiagonalOverlap = (row,col,newRow,newCol,positions)=>{
-    let temp_row = row;
-    let temp_col = col;
-    if(row > newRow){
-        temp_row-=1;
-        temp_col-=1;
-        for(let i=row+col-2;i>newRow+newCol;i-=2){
-            if(positions[`${temp_row}+${temp_col}`]!==undefined){
-                return true;
-            }
-            temp_row-=1;
-            temp_col-=1;
-        }
-    } else {
-        temp_row+=1;
-        temp_col+=1;
-        for(let i=row+col+2;i<newRow+newCol;i+=2){
-            if(positions[`${temp_row}+${temp_col}`]!==undefined){
-                return true;
-            }
-            temp_row+=1;
-            temp_col+=1;
-        }
-    }
-    return false;
-}
-
-const checkforwardDiagonalOverlap = (row,col,newRow,newCol,positions)=>{
-    let temp_row = row;
-    let temp_col = col;
-    if(row > newRow){
-        temp_row-=1;
-        temp_col+=1;
-        for(let i=row-col-2;i>newRow-newCol;i-=2){
-            if(positions[`${temp_row}+${temp_col}`]!==undefined){
-                return true;
-            }
-            temp_row-=1;
-            temp_col+=1;
-        }
-    } else {
-        temp_row+=1;
-        temp_col-=1;
-        for(let i=row-col+2;i<newRow-newCol;i+=2){
-            if(positions[`${temp_row}+${temp_col}`]!==undefined){
-                return true;
-            }
-            temp_row+=1;
-            temp_col-=1;
-        }
-    }
-    return false;
-}
-
-const checkValidMove = (id,selectedLocation,positions,turn,initialTurn)=>{
-    if(id===undefined || id===null){
-        return;
-    }
-    if(positions[selectedLocation]===undefined){
-        return 0;
-    }
-    
-    const newRow = Number(id.split('+')[0]);
-    const newCol = Number(id.split('+')[1]);
-    const row = Number(selectedLocation.split('+')[0]);
-    const col = Number(selectedLocation.split('+')[1]);
-    
-    switch(positions[selectedLocation].type){
-        case 'pawn':
-            const plainMoves={}
-            const attackMoves={}
-            
-            if(initialTurn==='white'){
-                if(positions[selectedLocation].color ==='white'){
-                    plainMoves[`${row-1}+${col}`] = true;
-                    attackMoves[`${row-1}+${col-1}`] = true;
-                    attackMoves[`${row-1}+${col+1}`] = true;
-                    if(row===6){
-                        plainMoves[`${row-2}+${col}`] = true;
-                    }
-                }else{
-                    plainMoves[`${row+1}+${col}`] = true;
-                    attackMoves[`${row+1}+${col-1}`] = true;
-                    attackMoves[`${row+1}+${col+1}`] = true;
-                    if(row===1){
-                        plainMoves[`${row+2}+${col}`] = true;
-                    }
-                }
-                
-            } else {
-                if(positions[selectedLocation].color ==='black'){
-                    plainMoves[`${row-1}+${col}`] = true;
-                    attackMoves[`${row-1}+${col-1}`] = true;
-                    attackMoves[`${row-1}+${col+1}`] = true;
-                    if(row===6){
-                        plainMoves[`${row-2}+${col}`] = true;
-                    }
-                }else{
-                    plainMoves[`${row+1}+${col}`] = true;
-                    attackMoves[`${row+1}+${col-1}`] = true;
-                    attackMoves[`${row+1}+${col+1}`] = true;
-                    if(row===1){
-                        plainMoves[`${row+2}+${col}`] = true;
-                    }
-                }
-            }
-            
-            if(attackMoves[`${newRow}+${newCol}`]===true){
-                if(checkConstraints([newRow,newCol])){
-                    if(positions[id]!==undefined && positions[id].color!==turn){
-                        return 1;
-                    }
-                }
-            }
-    
-            if(plainMoves[`${newRow}+${newCol}`]===true){
-                if(checkConstraints([newRow,newCol]) && positions[`${newRow}+${newCol}`]===undefined){
-                    return 1;
-                }
-            }
-            break;
-        case 'knight':
-            let moves={
-                [`${row+2}+${col+1}`] : true,
-                [`${row-2}+${col+1}`] : true,
-                [`${row+1}+${col+2}`] : true,
-                [`${row+1}+${col-2}`] : true,
-                [`${row+2}+${col-1}`] : true,
-                [`${row-2}+${col-1}`] : true,
-                [`${row-1}+${col+2}`] : true,
-                [`${row-1}+${col-2}`] : true,
-            }
-    
-            if(checkConstraints([newRow,newCol]) && moves[`${newRow}+${newCol}`]===true){
-                if( positions[id]===undefined || (positions[id]!==undefined && positions[id].color!==turn)){
-                    return 1;
-                }
-            }
-            break;
-        case 'rook':
-            if(checkConstraints([newRow,newCol])){
-                let overlap = false;
-                let allowed = false;
-                if(newRow===row && newCol!==col){
-                    overlap = checkRowOverlap(row,col,newCol,positions);
-                    allowed = true;
-                }
-                if(newRow!==row && newCol===col){
-                    overlap = checkColOverlap(col,row,newRow,positions);
-                    allowed = true;
-                }
-                if(overlap===true || allowed ===false){
-                    return 0;
-                }
-                if(positions[id]===undefined || (positions[id]!==undefined && positions[id].color!==turn)){
-                    return 1;
-                }   
-            }
-            break;
-        case 'king':
-            let square={
-                [`${row+1}+${col}`] : true,
-                [`${row-1}+${col}`] : true,
-                [`${row}+${col+1}`] : true,
-                [`${row}+${col-1}`] : true,
-                [`${row+1}+${col+1}`] : true,
-                [`${row+1}+${col-1}`] : true,
-                [`${row-1}+${col+1}`] : true,
-                [`${row-1}+${col-1}`] : true,
-            }
-            
-            if(checkConstraints([newRow,newCol]) && square[`${newRow}+${newCol}`]===true){
-                if(positions[id]===undefined || (positions[id]!==undefined && positions[id].color!==turn)){
-                    return 1;
-                }
-            }
-            break;
-        case 'queen':
-            if(checkConstraints([newRow,newCol])){
-                let overlap = false;
-                let allowed = false;
-                if(newRow===row && newCol!==col){
-                    overlap = checkRowOverlap(row,col,newCol,positions);
-                    allowed = true;
-                }
-                if(newRow!==row && newCol===col){
-                    overlap = checkColOverlap(col,row,newRow,positions);
-                    allowed = true;
-                }
-                if(newRow + newCol === row + col){
-                    overlap = checkforwardDiagonalOverlap(row,col,newRow,newCol,positions);
-                    allowed = true;
-                }
-                if(newRow - newCol + 7 === row - col + 7){
-                    overlap = checkbackwardDiagonalOverlap(row,col,newRow,newCol,positions);
-                    allowed = true;
-                }
-                if(overlap===true || allowed ===false){
-                    return 0;
-                }
-                if(positions[id]===undefined || (positions[id]!==undefined && positions[id].color!==turn)){
-                    return 1;
-                }   
-            }
-            break;
-        case 'bishop':
-            if(checkConstraints([newRow,newCol])){
-                let overlap = false;
-                let allowed = false;
-                if(newRow + newCol === row + col){
-                    overlap = checkforwardDiagonalOverlap(row,col,newRow,newCol,positions);
-                    allowed = true;
-                }
-                if(newRow - newCol + 7 === row - col + 7){
-                    overlap = checkbackwardDiagonalOverlap(row,col,newRow,newCol,positions);
-                    allowed = true;
-                }
-                if(overlap===true || allowed ===false){
-                    return 0;
-                }
-                if(positions[id]===undefined || (positions[id]!==undefined && positions[id].color!==turn)){
-                    return 1;
-                }   
-            }
-            break;
-        default : break;
-    }
-}
+/*
+    Mini max algorithm with alpha beta pruning.
+    The search space goes upto depth 3
+*/
 
 class MiniMax {
     constructor(turn){
-        this.turn = turn;
+        this.turn = turn; // your turn color
+
+        // chess board heuristics for each piece 
         let pawnEvalSelf =
             [
                 [0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0,  0.0],
@@ -364,6 +105,8 @@ class MiniMax {
             this.bishopEvalWhite = bishopEvlOpponent;
             this.pawnEvalWhite = pawnEvalOpponent;
         }
+
+        // all possible chess board positions for move generation
         this.squares = [];
         for(let i=0;i<8;i++){
             for(let j=0;j<8;j++){
@@ -372,6 +115,7 @@ class MiniMax {
         }
     }
 
+    //generate all possible moves
     generateMoves=(turn,positions)=>{
         let moves = [];
         for(let i=0;i<64;i++){
@@ -396,7 +140,7 @@ class MiniMax {
                     var newGameMove = newGameMoves[i]
                     let piece = positions[newGameMove[0]];
                     positions[newGameMove[1]] = piece;
-                    delete positions[newGameMove[0]];
+                    delete positions[newGameMove[0]]; // opponent plays the move on board
         
                     var value = this.minimax(
                         depth - 1,
@@ -404,12 +148,12 @@ class MiniMax {
                         10000,
                         !isMaximisingPlayer,
                         {...positions},
-                        turn==='white' ? 'black' : 'white'
+                        turn==='white' ? 'black' : 'white' // play the remaining game 
                     );
         
                     piece = positions[newGameMove[1]];
                     positions[newGameMove[0]] = piece;
-                    delete positions[newGameMove[1]];
+                    delete positions[newGameMove[1]]; // opponent un-plays the played move or backtracks
         
                     if(value >= bestMove) {
                         bestMove = value;
@@ -423,6 +167,11 @@ class MiniMax {
         })
     };
     
+    /*
+        if beta is less than alpha, a better move is availiable for the opponent, which is 
+        the parent of current node 
+    */
+   
     minimax = function (depth,alpha, beta, isMaximisingPlayer,positions,turn) {
     
         if (depth === 0) {
@@ -431,7 +180,9 @@ class MiniMax {
         
         var newGameMoves = this.generateMoves(turn,positions);
        
-        if (isMaximisingPlayer) {
+        if (isMaximisingPlayer) { 
+            //chose move with max score
+            // update alpha with max of all moves
             var bestMove = -9999;
             for (var i = 0; i < newGameMoves.length; i++) {
                 var newGameMove = newGameMoves[i]
@@ -462,6 +213,8 @@ class MiniMax {
             }
             return bestMove;
         } else {
+            //chose move with min score
+            // update beta with min of all moves
             bestMove = 9999;
             for (i = 0; i < newGameMoves.length; i++) {
                 newGameMove = newGameMoves[i]
@@ -484,7 +237,7 @@ class MiniMax {
                 piece = positions[newGameMove[1]];
                 positions[newGameMove[0]] = piece;
                 delete positions[newGameMove[1]];
-
+                
                 beta = Math.min(beta, bestMove);
                 if (beta <= alpha) {
                     return bestMove;

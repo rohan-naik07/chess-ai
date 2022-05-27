@@ -1,11 +1,13 @@
 import qdt from './pieces/Chess_qdt60.png';
 import qlt from './pieces/Chess_qlt60.png';
 
+// check move if placing piece outside of board
 const checkConstraints = position=>(
     position[0] >= 0 && position[0]<8 &&
     position[1] >= 0 && position[1]<8 
 )
 
+// horizontally check if some piece comes in between 
 const checkRowOverlap = (common_row,col,newCol,positions)=>{
     if(col < newCol){
         for(let i=col+1;i<newCol;i++){
@@ -23,6 +25,7 @@ const checkRowOverlap = (common_row,col,newCol,positions)=>{
     return false;
 }
 
+// vertically check if some piece comes in between 
 const checkColOverlap = (common_col,row,newRow,positions)=>{
     if(row < newRow){
         for(let i=row+1;i<newRow;i++){
@@ -40,6 +43,7 @@ const checkColOverlap = (common_col,row,newRow,positions)=>{
     return false;
 }
 
+// diagonally check if some piece comes in between 
 const checkbackwardDiagonalOverlap = (row,col,newRow,newCol,positions)=>{
     let temp_row = row;
     let temp_col = col;
@@ -67,6 +71,7 @@ const checkbackwardDiagonalOverlap = (row,col,newRow,newCol,positions)=>{
     return false;
 }
 
+// diagonally check if some piece comes in between 
 const checkforwardDiagonalOverlap = (row,col,newRow,newCol,positions)=>{
     let temp_row = row;
     let temp_col = col;
@@ -94,7 +99,7 @@ const checkforwardDiagonalOverlap = (row,col,newRow,newCol,positions)=>{
     return false;
 }
 
-
+// check if you can put opponent in check
 export const isinCheck = (turn,positions)=>{
     let kingPosition = null;
     let flag = false;
@@ -116,6 +121,7 @@ export const isinCheck = (turn,positions)=>{
     return flag;
 }
 
+
 export const isCheckmated = (turn,positions)=>{
     if(isinCheck(turn,positions)===false){
         return false;
@@ -126,6 +132,10 @@ export const isCheckmated = (turn,positions)=>{
             squares.push(`${i}+${j}`)
         }
     }
+    /*
+        if opponent is in check, check if there is at least one move possible 
+        for the opponent which can get him/her out of check
+    */
     for(let i=0;i<64;i++){
         if(positions[squares[i]]!==undefined && positions[squares[i]].getColor()!==turn){
             for(let j=0;j<64;j++){
@@ -147,7 +157,7 @@ export const isCheckmated = (turn,positions)=>{
 
 class Piece {
     constructor(identifier,image,initialTurn){
-        this.identifier = identifier;
+        this.identifier = identifier; //black0pawn
         this.image = image
         this.color = identifier.substring(0,5);
         this.type = identifier.substring(6);
