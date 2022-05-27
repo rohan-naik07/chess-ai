@@ -31,9 +31,7 @@ function getBoard(){
 const Game = ({game,token,history,gameWithAI})=>{
     const user_id = jwtDecode(token)._id;
     const socket = gameWithAI===false ? getSocket() : null;
-    const initialTurn = user_id===game.participant1._id ? game.initialTurn : (
-        game.initialTurn==='white' ? 'black' : 'white'
-    );
+    const initialTurn = user_id===game.participant1._id ? game.initialTurn : ( game.initialTurn==='white' ? 'black' : 'white');
     const initialPositions = getInitialPositions(initialTurn);
     const [positions,setPositions] = React.useState(initialPositions.positions);
     const [turn,setTurn] = React.useState(initialTurn);
