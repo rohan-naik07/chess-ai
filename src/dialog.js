@@ -37,6 +37,7 @@ const styles = {
     link : {
         display : 'flex',
         margin : 5,
+        overflow : 'flow',
         backgroundColor : '#c8cfca',
         border: 'solid #000',
         borderWidth: '1px',
@@ -121,7 +122,7 @@ const Dialog = props =>{
         try {
             setLoading(false)
             const response = await getGameId(game,token);
-            setUrl(`https://thechessai.netlify.app/game/${response.data.message}`)
+            setUrl(`${process.env.REACT_APP_URL}/game/${response.data.message}`)
         } catch (error) {
             setLoading(false)
             console.log(error)
@@ -218,7 +219,7 @@ const Dialog = props =>{
                                 <h5>Share the below link</h5>
                                 <br/>
                                 <div style={styles.link}>
-                                    <h5>{url}</h5>
+                                    <div style={{overflow:'auto'}}><h5>{url}</h5></div>
                                     <button style={styles.refresh} onClick={()=>navigator.clipboard.writeText(url)}>Copy</button>
                                 </div>
                             </div> : <LoadingComponent message={'Creating a new game....'}/>

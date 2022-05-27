@@ -32,9 +32,11 @@
          password : 'dummy-password'
        });
        logger.log(user)
+       new Singleton().getAIInstance().setId(user._id)
+     } else {
+        new Singleton().getAIInstance().setId(user[0]._id)
      }
-     
-     new Singleton().getAIInstance().setId(user[0]._id)
+    
    } catch (error) {
      logger.log(error)
    }
