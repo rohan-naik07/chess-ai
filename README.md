@@ -122,7 +122,7 @@ Following packages need to be installed in order for the app to run.
 
 1. Clone the repo
    ```sh
-   git clone https://github.com/your_username_/Project-Name.git
+   git clone https://github.com/rohan-naik07/chess-ai.git
    ```
 2. Install all the node packages in the root folder
    ```sh
