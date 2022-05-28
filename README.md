@@ -165,7 +165,7 @@ _Make sure that docker is running._
    ```
 2. Run docker compose
    ```sh
-    docker compose up
+    docker-compose up
    ```
    
 <p align="right">(<a href="#top">back to top</a>)</p>
