@@ -161,7 +161,7 @@ _Make sure that docker is running._
 
 1. Clone the repo
    ```sh
-   git clone https://github.com/your_username_/Project-Name.git
+   git clone https://github.com/rohan-naik07/chess-ai.git
    ```
 2. Run docker compose
    ```sh
